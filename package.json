@@ -1,0 +1,21 @@
+{
+  "name": "@sylphx/video-reader-mcp",
+  "version": "0.0.0",
+  "description": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SylphxAI/video-reader-mcp.git"
+  },
+  "homepage": "https://github.com/SylphxAI/video-reader-mcp#readme",
+  "keywords": ["mcp", "model-context-protocol", "reader", "evidence", "sylphx"],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"bootstrap: no tests yet\" && exit 0"
+  }
+}

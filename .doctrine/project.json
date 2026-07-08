@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "repo": "SylphxAI/video-reader-mcp",
+    "name": "Video Reader MCP",
+    "lifecycle": "bootstrap",
+    "layer": "tooling",
+    "summary": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision."
+  }
+}

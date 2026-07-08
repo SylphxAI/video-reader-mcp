@@ -1,0 +1,13 @@
+node_modules/
+build/
+*.log
+coverage/
+.env*
+
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist
+
+# Test Reports
+test-report.junit.xml
+.vercel
