@@ -6,14 +6,12 @@
 
 Part of the [Sylphx Reader portfolio](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/adr/0004-reader-portfolio-architecture.md).
 
-| Sibling | Role |
+| Repository | Role |
 | --- | --- |
-| [pdf-reader-mcp](https://github.com/SylphxAI/pdf-reader-mcp) | PDF Agent Document Twin (production) |
-| [image-reader-mcp](https://github.com/SylphxAI/image-reader-mcp) | Image Agent Media Twin |
-| [video-reader-mcp](https://github.com/SylphxAI/video-reader-mcp) | Video Agent Media Twin |
-| [smart-reader-mcp](https://github.com/SylphxAI/smart-reader-mcp) | Format sniff + delegate |
-| [smart-read-mcp](https://github.com/SylphxAI/smart-read-mcp) | Universal path (local + guarded URL) |
-| [reader-evidence](https://github.com/SylphxAI/reader-evidence) | Shared evidence schema |
+| [pdf-reader-mcp](https://github.com/SylphxAI/pdf-reader-mcp) | PDF (production) |
+| [image-reader-mcp](https://github.com/SylphxAI/image-reader-mcp) | Image |
+| **video-reader-mcp** (this repo) | Video |
+| [smart-reader-mcp](https://github.com/SylphxAI/smart-reader-mcp) | Unified read + delegate |
 
 ## Read vs interpret
 

@@ -19,4 +19,4 @@ processing). Generative LLMs are optional remote providers only, never the defau
 ## Consequences
 
 - Implement `read_video` with provenance and release gates before v0.1.0.
-- Depend on `@sylphx/reader-evidence` for shared schema when types stabilize.
+- Align provenance fields with smart-reader-mcp response envelope (no separate schema repo).
