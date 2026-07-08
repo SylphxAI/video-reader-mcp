@@ -6,8 +6,9 @@
 
 ## Context
 
-This repository is part of the Sylphx Reader portfolio. Cross-cutting architecture
-is defined in [pdf-reader-mcp ADR-0004](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/adr/0004-reader-portfolio-architecture.md).
+Dispatch integration is defined in
+[smart-reader-mcp ADR-0002](https://github.com/SylphxAI/smart-reader-mcp/blob/main/docs/adr/0002-reader-portfolio-architecture.md).
+This repo does not own PDF or portfolio-wide docs.
 
 ## Decision
 
