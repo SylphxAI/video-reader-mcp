@@ -3,6 +3,12 @@ name: Publish to MCP Registry
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag (e.g. v0.1.0)
+        required: true
+        default: v0.1.0
 
 permissions:
   contents: write
@@ -22,7 +28,8 @@ jobs:
 
       - name: Sync server.json version with release tag
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ github.event_name == 'workflow_dispatch' && format('{0}', github.event.inputs.version) || github.ref_name }}"
+          VERSION="${VERSION#v}"
           jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp
           mv server.tmp server.json
           cat server.json
