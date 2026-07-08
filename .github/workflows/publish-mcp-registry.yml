@@ -13,18 +13,8 @@ jobs:
     name: Publish MCP Registry metadata
     runs-on: ubuntu-latest
     steps:
-      - name: Create release bot token
-        id: release-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-
       - name: Checkout repository
         uses: actions/checkout@v7.0.0
-        with:
-          token: ${{ steps.release-token.outputs.token }}
 
       - name: Install mcp-publisher
         run: |

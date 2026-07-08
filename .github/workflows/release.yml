@@ -8,27 +8,18 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Create release bot token
-        id: release-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-
       - name: Checkout repository
         uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0
-          token: ${{ steps.release-token.outputs.token }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -58,8 +49,6 @@ jobs:
           title: 'chore(release): version packages'
           commit: 'chore(release): version packages'
           createGithubReleases: true
-          commitMode: github-api
-          github-token: ${{ steps.release-token.outputs.token }}
         env:
-          GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
