@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
 export const videoSourceSchema = z.object({
-  path: z
-    .string()
-    .min(1)
-    .describe('Path to the local video file (absolute or relative to cwd).'),
+  path: z.string().min(1).describe('Path to the local video file (absolute or relative to cwd).'),
 });
 
 export const readVideoArgsSchema = z.object({

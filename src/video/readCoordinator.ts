@@ -36,9 +36,7 @@ export const buildTimelineDocument = async (
   const format = {
     ...(probe.format.format_name ? { format_name: probe.format.format_name } : {}),
     duration_ms: secondsToMs(probe.format.duration),
-    ...(probe.format.bit_rate
-      ? { bit_rate: Number.parseInt(probe.format.bit_rate, 10) }
-      : {}),
+    ...(probe.format.bit_rate ? { bit_rate: Number.parseInt(probe.format.bit_rate, 10) } : {}),
     ...(probe.format.size ? { size_bytes: Number.parseInt(probe.format.size, 10) } : {}),
     ...(probe.format.tags ? { tags: probe.format.tags } : {}),
   };

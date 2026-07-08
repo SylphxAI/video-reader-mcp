@@ -1,12 +1,9 @@
-import { execBinary, isBinaryAvailable } from './exec.js';
 import type { SceneInfo } from '../types/timeline.js';
+import { execBinary, isBinaryAvailable } from './exec.js';
 
 const SCENE_PTS_TIME_RE = /pts_time:([0-9.]+)/g;
 
-export const parseSceneFilterOutput = (
-  stderr: string,
-  threshold: number
-): SceneInfo[] => {
+export const parseSceneFilterOutput = (stderr: string, threshold: number): SceneInfo[] => {
   const scenes: SceneInfo[] = [];
   let match: RegExpExecArray | null;
 

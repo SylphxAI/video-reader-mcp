@@ -1,9 +1,12 @@
 {
   "name": "@sylphx/video-reader-mcp",
-  "version": "0.1.0",
+  "version": "0.0.0",
+  "mcpName": "io.github.SylphxAI/video-reader-mcp",
   "description": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "bin": {
     "video-reader-mcp": "./dist/index.js"
@@ -39,13 +42,22 @@
     "build": "tsc && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "bun test",
-    "start": "node dist/index.js"
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "sync:server-json": "bun scripts/sync-server-json.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "bun run clean && bun run build",
+    "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
     "@types/bun": "^1.2.19",
     "@types/node": "^25.9.1",
     "typescript": "^7.0.2"

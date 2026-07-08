@@ -77,10 +77,7 @@ export const mapChapters = (chapters: FfprobeChapter[] | undefined) =>
     ...(chapter.tags?.title ? { title: chapter.tags.title } : {}),
   }));
 
-export const collectProbeWarnings = (
-  probe: FfprobeResult,
-  includeStreams: boolean
-): string[] => {
+export const collectProbeWarnings = (probe: FfprobeResult, includeStreams: boolean): string[] => {
   const warnings: string[] = [];
   const videoStreams = probe.streams.filter((s) => s.codec_type === 'video');
   const audioStreams = probe.streams.filter((s) => s.codec_type === 'audio');
@@ -93,7 +90,11 @@ export const collectProbeWarnings = (
   }
 
   for (const stream of videoStreams) {
-    if (stream.avg_frame_rate && stream.r_frame_rate && stream.avg_frame_rate !== stream.r_frame_rate) {
+    if (
+      stream.avg_frame_rate &&
+      stream.r_frame_rate &&
+      stream.avg_frame_rate !== stream.r_frame_rate
+    ) {
       warnings.push(
         `Stream ${stream.index}: variable frame rate suspected (avg_frame_rate=${stream.avg_frame_rate}, r_frame_rate=${stream.r_frame_rate}).`
       );
