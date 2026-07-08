@@ -1,21 +1,54 @@
 {
   "name": "@sylphx/video-reader-mcp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",
   "private": true,
   "license": "MIT",
+  "bin": {
+    "video-reader-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SylphxAI/video-reader-mcp.git"
   },
   "homepage": "https://github.com/SylphxAI/video-reader-mcp#readme",
-  "keywords": ["mcp", "model-context-protocol", "reader", "evidence", "sylphx"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "video",
+    "reader",
+    "evidence",
+    "ffprobe",
+    "ffmpeg",
+    "subtitles",
+    "sylphx"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "echo \"bootstrap: no tests yet\" && exit 0"
-  }
+    "build": "tsc && chmod +x dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "bun test",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.19",
+    "@types/node": "^25.9.1",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "bun@1.3.12"
 }
