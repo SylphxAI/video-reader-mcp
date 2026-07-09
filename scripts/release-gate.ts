@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { runDoctor } from '../src/doctor.js';
+import { transcribeViaRustEngine } from '../src/engine/rust-asr.js';
 import { buildTimelineDocument } from '../src/video/readCoordinator.js';
 import { isBinaryAvailable } from '../src/utils/exec.js';
 
@@ -126,6 +127,26 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'rust:hash_policy',
     fileExists('crates/video-reader-core/src/hash.rs'),
     'Rust video-reader-core hash and cache policy engine is present'
+  );
+
+  addCheck(
+    checks,
+    'rust:asr_core',
+    fileExists('crates/video-reader-core/src/asr.rs'),
+    'Rust video-reader-core ASR orchestration engine is present'
+  );
+
+  const asrResponse = transcribeViaRustEngine(
+    path.join(repoRoot, 'test/fixtures/no-subtitle.mp4')
+  );
+  addCheck(
+    checks,
+    'boundary:transcribe_asr',
+    !asrResponse.ok && asrResponse.code === 'ADAPTER_UNAVAILABLE',
+    'transcribe_asr returns a structured adapter-unavailable envelope when whisper is not installed',
+    asrResponse.ok
+      ? { route: asrResponse.result.route }
+      : { code: asrResponse.code, message: asrResponse.message }
   );
 
   addCheck(

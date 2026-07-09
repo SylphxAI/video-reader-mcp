@@ -2,6 +2,7 @@ use std::io::{self, Read};
 use std::path::PathBuf;
 
 use serde::Deserialize;
+use video_reader_core::asr::{transcribe_video, AsrErrorCode};
 use video_reader_core::hash::{build_cache_key, hash_source_file, CacheOptions};
 use video_reader_core::timeline::{assemble_probe_timeline, AssembleOptions};
 use video_reader_core::{ENGINE_NAME, ENGINE_VERSION};
@@ -34,6 +35,14 @@ struct CacheKeySuccessEnvelope {
     engine: &'static str,
     version: &'static str,
     cache_key: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct AsrSuccessEnvelope {
+    status: &'static str,
+    engine: &'static str,
+    version: &'static str,
+    asr: video_reader_core::asr::AsrResult,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -104,6 +113,48 @@ fn handle_hash_source(input: &serde_json::Value) -> Result<HashSuccessEnvelope, 
         version: ENGINE_VERSION,
         source_hash,
     })
+}
+
+fn asr_error_code(code: AsrErrorCode) -> &'static str {
+    match code {
+        AsrErrorCode::InvalidParams => "INVALID_PARAMS",
+        AsrErrorCode::AdapterUnavailable => "ADAPTER_UNAVAILABLE",
+        AsrErrorCode::TranscriptionFailed => "TRANSCRIPTION_FAILED",
+    }
+}
+
+fn handle_transcribe_asr(input: &serde_json::Value) -> Result<AsrSuccessEnvelope, ErrorEnvelope> {
+    let path = input
+        .get("path")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: "path is required".into(),
+            next_action: "Pass a readable local video file path.".into(),
+        })?;
+
+    let max_audio_seconds = input
+        .get("max_audio_seconds")
+        .and_then(|value| value.as_u64())
+        .unwrap_or(300);
+
+    match transcribe_video(PathBuf::from(path).as_path(), max_audio_seconds) {
+        Ok(asr) => Ok(AsrSuccessEnvelope {
+            status: "ok",
+            engine: ENGINE_NAME,
+            version: ENGINE_VERSION,
+            asr,
+        }),
+        Err(error) => Err(ErrorEnvelope {
+            status: "error",
+            code: asr_error_code(error.code).into(),
+            message: error.message,
+            next_action:
+                "Install ffmpeg plus whisper-cli/whisper-cpp and set WHISPER_MODEL to a ggml model."
+                    .into(),
+        }),
+    }
 }
 
 fn handle_build_cache_key(
@@ -183,11 +234,17 @@ fn main() {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),
             Err(error) => serde_json::to_string(&error).expect("serialize"),
         },
+        "transcribe_asr" => match handle_transcribe_asr(&request.input) {
+            Ok(success) => serde_json::to_string(&success).expect("serialize"),
+            Err(error) => serde_json::to_string(&error).expect("serialize"),
+        },
         other => serde_json::to_string(&ErrorEnvelope {
             status: "error",
             code: "UNSUPPORTED_TOOL".into(),
             message: format!("Unsupported tool: {other}"),
-            next_action: "Use assemble_probe_timeline, hash_source, or build_cache_key.".into(),
+            next_action:
+                "Use assemble_probe_timeline, hash_source, build_cache_key, or transcribe_asr."
+                    .into(),
         })
         .expect("serialize"),
     };

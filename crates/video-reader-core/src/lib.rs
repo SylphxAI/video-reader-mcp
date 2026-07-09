@@ -1,5 +1,6 @@
 //! Rust timeline assembly, hashing, and cache policy for video-reader-mcp.
 
+pub mod asr;
 pub mod hash;
 pub mod timeline;
 
