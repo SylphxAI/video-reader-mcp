@@ -1,0 +1,52 @@
+{
+  "profile": "video_reader_fixture_corpus",
+  "description": "Phase 0 fixture corpus for deterministic timeline contract validation.",
+  "cases": [
+    {
+      "id": "no-subtitle",
+      "kind": "generated",
+      "fixture": "no-subtitle.mp4",
+      "expects": {
+        "video_stream": true,
+        "subtitle_stream": false,
+        "warnings_include": ["No embedded subtitle streams found"]
+      }
+    },
+    {
+      "id": "subtitle-stream",
+      "kind": "probe",
+      "fixture": "probes/subtitle-stream.json",
+      "expects": {
+        "subtitle_stream": true,
+        "subtitle_codec": "subrip"
+      }
+    },
+    {
+      "id": "multi-stream",
+      "kind": "probe",
+      "fixture": "probes/multi-stream.json",
+      "expects": {
+        "stream_count": 3,
+        "has_audio": true,
+        "has_video": true
+      }
+    },
+    {
+      "id": "corrupted-truncated",
+      "kind": "generated",
+      "fixture": "corrupted-truncated.mp4",
+      "expects": {
+        "success": false
+      }
+    },
+    {
+      "id": "long-sample",
+      "kind": "generated",
+      "fixture": "no-subtitle.mp4",
+      "expects": {
+        "duration_ms_min": 1500,
+        "video_stream": true
+      }
+    }
+  ]
+}

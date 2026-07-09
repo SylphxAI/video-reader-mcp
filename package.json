@@ -9,9 +9,10 @@
   },
   "license": "MIT",
   "bin": {
-    "video-reader-mcp": "./dist/index.js"
+    "video-reader-mcp": "./bin/video-reader-mcp"
   },
   "files": [
+    "bin/",
     "dist/",
     "README.md",
     "LICENSE"
@@ -39,9 +40,12 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "build:rust": "cargo build --release -p video-reader-core -p video-reader-cli -p video-reader-mcp-server && bun scripts/stage-rust-mcp.ts",
+    "test:rust": "cargo test",
     "build": "tsc && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "bun test",
+    "test:rust-timeline": "cargo test && bun test test/rustTimeline.boundary.test.ts",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "sync:server-json": "bun scripts/sync-server-json.ts",
@@ -49,9 +53,12 @@
     "start": "node dist/index.js",
     "clean": "rm -rf dist coverage",
     "prepublishOnly": "bun run clean && bun run build",
-    "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish"
+    "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish",
+    "doctor": "bun run src/index.ts doctor",
+    "benchmark:release-gate": "bun scripts/release-gate.ts"
   },
   "dependencies": {
+    "@sylphx/reader-evidence": "file:../reader-evidence",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },

@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "crates/video-reader-core",
+    "crates/video-reader-cli",
+    "crates/video-reader-mcp-server",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"

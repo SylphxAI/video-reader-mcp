@@ -1,0 +1,15 @@
+[package]
+name = "video-reader-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "JSON CLI for video-reader-core"
+
+[[bin]]
+name = "video-reader-cli"
+path = "src/main.rs"
+
+[dependencies]
+video-reader-core = { path = "../video-reader-core" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

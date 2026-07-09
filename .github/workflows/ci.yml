@@ -16,7 +16,12 @@ jobs:
         with:
           bun-version: '1.3.12'
       - run: bun install --frozen-lockfile
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
       - run: bun run check
       - run: bun run typecheck
       - run: bun run build
       - run: bun test
+      - run: bun run test:rust-timeline
+      - run: bun test test/readmeDiscovery.test.ts
+      - run: bun run benchmark:release-gate

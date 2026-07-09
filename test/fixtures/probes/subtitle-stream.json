@@ -1,0 +1,26 @@
+{
+  "streams": [
+    {
+      "index": 0,
+      "codec_name": "h264",
+      "codec_type": "video",
+      "width": 640,
+      "height": 360,
+      "avg_frame_rate": "24/1",
+      "r_frame_rate": "24/1"
+    },
+    {
+      "index": 1,
+      "codec_name": "subrip",
+      "codec_type": "subtitle",
+      "tags": { "language": "eng" }
+    }
+  ],
+  "format": {
+    "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+    "duration": "12.5",
+    "bit_rate": "800000",
+    "size": "1250000"
+  },
+  "chapters": []
+}
