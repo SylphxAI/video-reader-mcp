@@ -58,6 +58,7 @@
     "benchmark:release-gate": "bun scripts/release-gate.ts"
   },
   "dependencies": {
+    "@sylphx/reader-evidence": "file:../reader-evidence",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },

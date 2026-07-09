@@ -3,9 +3,11 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::envelope::build_read_video_envelope;
 use crate::ffprobe::{is_ffprobe_available, run_ffprobe};
 use crate::hash::{build_cache_key, hash_source_file, CacheOptions};
 use crate::timeline::{assemble_probe_timeline, AssembleOptions, TIMELINE_ROUTE};
+use crate::AgentEvidenceEnvelope;
 
 pub const READ_VIDEO_ROUTE: &str = "rust-read-video-v1";
 pub const SERVER_VERSION: &str = "0.1.0";
@@ -77,6 +79,8 @@ pub struct ReadVideoResponse {
     pub route: &'static str,
     pub engine: &'static str,
     pub results: Vec<VideoSourceResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub envelope: Option<AgentEvidenceEnvelope>,
 }
 
 #[derive(Debug, Clone)]
@@ -283,10 +287,23 @@ pub fn read_video_from_value(input: &Value) -> Result<ReadVideoResponse, ReadVid
         )));
     }
 
+    let primary = results
+        .iter()
+        .find(|result| result.success)
+        .expect("at least one successful result");
+    let primary_path = PathBuf::from(primary.source.as_str());
+    let envelope = build_read_video_envelope(primary_path.as_path(), &ReadVideoResponse {
+        route: READ_VIDEO_ROUTE,
+        engine: crate::ENGINE_NAME,
+        results: results.clone(),
+        envelope: None,
+    }, primary);
+
     Ok(ReadVideoResponse {
         route: READ_VIDEO_ROUTE,
         engine: crate::ENGINE_NAME,
         results,
+        envelope: Some(envelope),
     })
 }
 

@@ -73,6 +73,7 @@ struct ReadVideoSuccessEnvelope {
     version: &'static str,
     route: &'static str,
     results: Vec<video_reader_core::read_video::VideoSourceResult>,
+    envelope: Option<video_reader_core::AgentEvidenceEnvelope>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -456,6 +457,7 @@ fn main() {
                 version: ENGINE_VERSION,
                 route: READ_VIDEO_ROUTE,
                 results: response.results,
+                envelope: response.envelope,
             })
             .expect("serialize"),
             Err(error) => serde_json::to_string(&ErrorEnvelope {

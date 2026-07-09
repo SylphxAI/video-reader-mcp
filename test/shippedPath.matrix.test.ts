@@ -22,6 +22,10 @@ type CliEnvelope = {
     success?: boolean;
     timeline?: { provenance?: { assembly_route?: string; source_hash?: string } };
   }>;
+  envelope?: {
+    delegation?: { delegated_tool?: string; reader_package?: string };
+    sourceHash?: string;
+  };
 };
 
 const invokeCli = (tool: string, input: Record<string, unknown>, env: NodeJS.ProcessEnv) => {
@@ -104,6 +108,9 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
     expect(envelope.results?.[0]?.success).toBe(true);
     expect(envelope.results?.[0]?.timeline?.provenance?.assembly_route).toBe('rust-timeline');
     expect(envelope.results?.[0]?.timeline?.provenance?.source_hash?.length).toBe(64);
+    expect(envelope.envelope?.delegation?.delegated_tool).toBe('read_video');
+    expect(envelope.envelope?.delegation?.reader_package).toBe('@sylphx/video-reader-mcp');
+    expect(envelope.envelope?.sourceHash?.length).toBe(64);
     expect(existsSync(nodeInvokeLog)).toBe(false);
   });
 

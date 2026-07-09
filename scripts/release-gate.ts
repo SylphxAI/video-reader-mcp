@@ -348,6 +348,15 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     addCheck(checks, 'rust:mcp_server_crate', false, `video-reader-mcp-server build failed: ${message}`);
   }
 
+  addCheck(
+    checks,
+    'contract:reader_evidence_dep',
+    typeof pkg.dependencies?.['@sylphx/reader-evidence'] === 'string' &&
+      fileExists('node_modules/@sylphx/reader-evidence/src/envelope.ts'),
+    'video-reader depends on @sylphx/reader-evidence shared schema package',
+    { dependency: pkg.dependencies?.['@sylphx/reader-evidence'] }
+  );
+
   const passed = checks.filter((check) => check.status === 'passed').length;
   const failed = checks.length - passed;
 

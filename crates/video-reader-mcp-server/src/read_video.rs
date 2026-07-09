@@ -15,6 +15,7 @@ pub fn read_video(args: Value) -> Result<CallToolResult, rmcp::ErrorData> {
         "route": READ_VIDEO_ROUTE,
         "engine": video_reader_core::ENGINE_NAME,
         "results": response.results,
+        "envelope": response.envelope,
     });
 
     Ok(CallToolResult::structured(structured))
