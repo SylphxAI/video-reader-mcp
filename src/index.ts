@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import { formatDoctorReport, runDoctor } from './doctor.js';
 import { createReadVideoHandler } from './handlers/readVideo.js';
+import { createVideoEvidenceHandler } from './handlers/videoEvidence.js';
 import { createServer, http, stdio } from './mcp.js';
 
 const require = createRequire(import.meta.url);
@@ -33,9 +34,10 @@ const server = createServer({
   name: 'video-reader-mcp',
   version: packageJson.version,
   instructions:
-    'Evidence-first video reader. Use read_video to extract ffprobe metadata, embedded subtitles, scene boundaries, and timeline warnings without frame-by-frame vision LLM calls.',
+    'Evidence-first video reader. Use read_video to extract ffprobe metadata, embedded subtitles, scene boundaries, and timeline warnings. Use video_evidence for timestamped frame render or crop follow-up without frame-by-frame vision LLM calls.',
   tools: {
     read_video: createReadVideoHandler(packageJson.version),
+    video_evidence: createVideoEvidenceHandler(),
   },
   transport: createTransport(),
 });

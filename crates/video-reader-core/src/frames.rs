@@ -8,6 +8,36 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 pub const KEYFRAME_ROUTE: &str = "rust-keyframe-png";
+pub const RENDER_FRAME_ROUTE: &str = "rust-frame-render";
+pub const CROP_FRAME_ROUTE: &str = "rust-frame-crop";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CropRegion {
+    pub x: u32,
+    pub y: u32,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FrameRenderProvenance {
+    pub method: String,
+    pub time_ms: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FrameRenderEvidence {
+    pub time_ms: u64,
+    pub route: String,
+    pub frame_hash: String,
+    pub mime: String,
+    pub width: u32,
+    pub height: u32,
+    pub image_base64: String,
+    pub provenance: FrameRenderProvenance,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub crop: Option<CropRegion>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KeyframeProvenance {
@@ -46,6 +76,76 @@ pub struct FrameError {
     pub message: String,
 }
 
+pub fn render_frame(
+    path: &Path,
+    time_ms: u64,
+    max_dimension: Option<u32>,
+) -> Result<FrameRenderEvidence, FrameError> {
+    ensure_video_file(path)?;
+    ensure_ffmpeg_available()?;
+
+    let thumbnail = render_frame_png(path, time_ms, max_dimension, None).map_err(|message| {
+        FrameError {
+            code: FrameErrorCode::ExtractionFailed,
+            message,
+        }
+    })?;
+
+    Ok(FrameRenderEvidence {
+        time_ms,
+        route: RENDER_FRAME_ROUTE.into(),
+        frame_hash: thumbnail.frame_hash,
+        mime: "image/png".into(),
+        width: thumbnail.width,
+        height: thumbnail.height,
+        image_base64: thumbnail.image_base64,
+        provenance: FrameRenderProvenance {
+            method: "ffmpeg_seek_render".into(),
+            time_ms,
+        },
+        crop: None,
+    })
+}
+
+pub fn crop_frame(
+    path: &Path,
+    time_ms: u64,
+    crop: &CropRegion,
+    max_dimension: Option<u32>,
+) -> Result<FrameRenderEvidence, FrameError> {
+    if crop.width == 0 || crop.height == 0 {
+        return Err(FrameError {
+            code: FrameErrorCode::InvalidParams,
+            message: "crop width and height must be positive.".into(),
+        });
+    }
+
+    ensure_video_file(path)?;
+    ensure_ffmpeg_available()?;
+
+    let thumbnail = render_frame_png(path, time_ms, max_dimension, Some(crop)).map_err(|message| {
+        FrameError {
+            code: FrameErrorCode::ExtractionFailed,
+            message,
+        }
+    })?;
+
+    Ok(FrameRenderEvidence {
+        time_ms,
+        route: CROP_FRAME_ROUTE.into(),
+        frame_hash: thumbnail.frame_hash,
+        mime: "image/png".into(),
+        width: thumbnail.width,
+        height: thumbnail.height,
+        image_base64: thumbnail.image_base64,
+        provenance: FrameRenderProvenance {
+            method: "ffmpeg_seek_crop_render".into(),
+            time_ms,
+        },
+        crop: Some(crop.clone()),
+    })
+}
+
 pub fn extract_keyframes(
     path: &Path,
     limit: u32,
@@ -59,19 +159,8 @@ pub fn extract_keyframes(
         });
     }
 
-    if !path.is_file() {
-        return Err(FrameError {
-            code: FrameErrorCode::InvalidParams,
-            message: format!("Video path '{}' is not a readable file.", path.display()),
-        });
-    }
-
-    if !command_exists("ffmpeg") {
-        return Err(FrameError {
-            code: FrameErrorCode::FfmpegUnavailable,
-            message: "ffmpeg is required for keyframe extraction but was not found on PATH.".into(),
-        });
-    }
+    ensure_video_file(path)?;
+    ensure_ffmpeg_available()?;
 
     let bounded_limit = limit.min(64);
     let times_ms = index_keyframe_times(path, bounded_limit)?;
@@ -94,7 +183,7 @@ pub fn extract_keyframes(
         };
 
         if include_images {
-            let thumbnail = render_keyframe_png(path, time_ms, max_dimension).map_err(|message| {
+            let thumbnail = render_frame_png(path, time_ms, max_dimension, None).map_err(|message| {
                 FrameError {
                     code: FrameErrorCode::ExtractionFailed,
                     message,
@@ -192,16 +281,34 @@ struct ThumbnailPng {
     image_base64: String,
 }
 
-fn render_keyframe_png(
+fn ensure_video_file(path: &Path) -> Result<(), FrameError> {
+    if !path.is_file() {
+        return Err(FrameError {
+            code: FrameErrorCode::InvalidParams,
+            message: format!("Video path '{}' is not a readable file.", path.display()),
+        });
+    }
+    Ok(())
+}
+
+fn ensure_ffmpeg_available() -> Result<(), FrameError> {
+    if !command_exists("ffmpeg") {
+        return Err(FrameError {
+            code: FrameErrorCode::FfmpegUnavailable,
+            message: "ffmpeg is required for frame evidence but was not found on PATH.".into(),
+        });
+    }
+    Ok(())
+}
+
+fn render_frame_png(
     path: &Path,
     time_ms: u64,
     max_dimension: Option<u32>,
+    crop: Option<&CropRegion>,
 ) -> Result<ThumbnailPng, String> {
     let seconds = format!("{:.3}", time_ms as f64 / 1000.0);
-    let scale_filter = match max_dimension {
-        Some(limit) if limit > 0 => format!("scale='min({limit},iw)':-2"),
-        _ => "scale=iw:ih".into(),
-    };
+    let filter = build_frame_filter(max_dimension, crop);
 
     let output = Command::new("ffmpeg")
         .args([
@@ -217,7 +324,7 @@ fn render_keyframe_png(
             "-frames:v",
             "1",
             "-vf",
-            &scale_filter,
+            &filter,
             "-f",
             "image2pipe",
             "-vcodec",
@@ -247,6 +354,22 @@ fn render_keyframe_png(
         height,
         image_base64: base64_encode(&output.stdout),
     })
+}
+
+fn build_frame_filter(max_dimension: Option<u32>, crop: Option<&CropRegion>) -> String {
+    let mut filters = Vec::new();
+    if let Some(region) = crop {
+        filters.push(format!(
+            "crop={}:{}:{}:{}",
+            region.width, region.height, region.x, region.y
+        ));
+    }
+    match max_dimension {
+        Some(limit) if limit > 0 => filters.push(format!("scale='min({limit},iw)':-2")),
+        _ if crop.is_some() => filters.push("scale=iw:ih".into()),
+        _ => return "scale=iw:ih".into(),
+    };
+    filters.join(",")
 }
 
 fn png_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
@@ -306,6 +429,19 @@ fn command_exists(binary: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn build_frame_filter_includes_crop_and_scale() {
+        let crop = CropRegion {
+            x: 10,
+            y: 20,
+            width: 80,
+            height: 60,
+        };
+        let filter = build_frame_filter(Some(320), Some(&crop));
+        assert!(filter.contains("crop=80:60:10:20"));
+        assert!(filter.contains("scale='min(320,iw)':-2"));
+    }
 
     #[test]
     fn parses_keyframe_pts_times_from_showinfo_stderr() {

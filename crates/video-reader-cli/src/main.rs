@@ -3,7 +3,9 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use video_reader_core::asr::{transcribe_video, AsrErrorCode};
-use video_reader_core::frames::{extract_keyframes, FrameErrorCode};
+use video_reader_core::frames::{
+    crop_frame, extract_keyframes, render_frame, CropRegion, FrameErrorCode,
+};
 use video_reader_core::hash::{build_cache_key, hash_source_file, CacheOptions};
 use video_reader_core::timeline::{assemble_probe_timeline, AssembleOptions};
 use video_reader_core::{ENGINE_NAME, ENGINE_VERSION};
@@ -52,6 +54,14 @@ struct KeyframeSuccessEnvelope {
     engine: &'static str,
     version: &'static str,
     keyframes: Vec<video_reader_core::frames::KeyframeEvidence>,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct FrameRenderSuccessEnvelope {
+    status: &'static str,
+    engine: &'static str,
+    version: &'static str,
+    frame: video_reader_core::frames::FrameRenderEvidence,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -129,6 +139,122 @@ fn frame_error_code(code: FrameErrorCode) -> &'static str {
         FrameErrorCode::InvalidParams => "INVALID_PARAMS",
         FrameErrorCode::FfmpegUnavailable => "FFMPEG_UNAVAILABLE",
         FrameErrorCode::ExtractionFailed => "EXTRACTION_FAILED",
+    }
+}
+
+fn parse_crop(input: &serde_json::Value) -> Result<CropRegion, ErrorEnvelope> {
+    let crop = input.get("crop").ok_or_else(|| ErrorEnvelope {
+        status: "error",
+        code: "INVALID_PARAMS".into(),
+        message: "crop is required".into(),
+        next_action: "Pass crop with x, y, width, and height in video pixel coordinates.".into(),
+    })?;
+
+    #[derive(Deserialize)]
+    struct CropWire {
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+    }
+
+    let parsed: CropWire = serde_json::from_value(crop.clone()).map_err(|error| ErrorEnvelope {
+        status: "error",
+        code: "INVALID_PARAMS".into(),
+        message: format!("Invalid crop payload: {error}"),
+        next_action: "Use positive integer x, y, width, and height values.".into(),
+    })?;
+
+    Ok(CropRegion {
+        x: parsed.x,
+        y: parsed.y,
+        width: parsed.width,
+        height: parsed.height,
+    })
+}
+
+fn parse_time_ms(input: &serde_json::Value) -> Result<u64, ErrorEnvelope> {
+    input
+        .get("time_ms")
+        .and_then(|value| value.as_u64())
+        .ok_or_else(|| ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: "time_ms is required".into(),
+            next_action: "Pass a non-negative timestamp in milliseconds.".into(),
+        })
+}
+
+fn parse_max_dimension(input: &serde_json::Value) -> Option<u32> {
+    input
+        .get("max_dimension")
+        .and_then(|value| value.as_u64())
+        .map(|value| value as u32)
+}
+
+fn handle_render_frame(input: &serde_json::Value) -> Result<FrameRenderSuccessEnvelope, ErrorEnvelope> {
+    let path = input
+        .get("path")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: "path is required".into(),
+            next_action: "Pass a readable local video file path.".into(),
+        })?;
+
+    let time_ms = parse_time_ms(input)?;
+    let max_dimension = parse_max_dimension(input);
+
+    match render_frame(PathBuf::from(path).as_path(), time_ms, max_dimension) {
+        Ok(frame) => Ok(FrameRenderSuccessEnvelope {
+            status: "ok",
+            engine: ENGINE_NAME,
+            version: ENGINE_VERSION,
+            frame,
+        }),
+        Err(error) => Err(ErrorEnvelope {
+            status: "error",
+            code: frame_error_code(error.code).into(),
+            message: error.message,
+            next_action: "Install ffmpeg and provide a readable video with decodable frames.".into(),
+        }),
+    }
+}
+
+fn handle_crop_frame(input: &serde_json::Value) -> Result<FrameRenderSuccessEnvelope, ErrorEnvelope> {
+    let path = input
+        .get("path")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: "path is required".into(),
+            next_action: "Pass a readable local video file path.".into(),
+        })?;
+
+    let time_ms = parse_time_ms(input)?;
+    let crop = parse_crop(input)?;
+    let max_dimension = parse_max_dimension(input);
+
+    match crop_frame(
+        PathBuf::from(path).as_path(),
+        time_ms,
+        &crop,
+        max_dimension,
+    ) {
+        Ok(frame) => Ok(FrameRenderSuccessEnvelope {
+            status: "ok",
+            engine: ENGINE_NAME,
+            version: ENGINE_VERSION,
+            frame,
+        }),
+        Err(error) => Err(ErrorEnvelope {
+            status: "error",
+            code: frame_error_code(error.code).into(),
+            message: error.message,
+            next_action: "Install ffmpeg and provide valid crop bounds for the requested timestamp.".into(),
+        }),
     }
 }
 
@@ -310,12 +436,20 @@ fn main() {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),
             Err(error) => serde_json::to_string(&error).expect("serialize"),
         },
+        "render_frame" => match handle_render_frame(&request.input) {
+            Ok(success) => serde_json::to_string(&success).expect("serialize"),
+            Err(error) => serde_json::to_string(&error).expect("serialize"),
+        },
+        "crop_frame" => match handle_crop_frame(&request.input) {
+            Ok(success) => serde_json::to_string(&success).expect("serialize"),
+            Err(error) => serde_json::to_string(&error).expect("serialize"),
+        },
         other => serde_json::to_string(&ErrorEnvelope {
             status: "error",
             code: "UNSUPPORTED_TOOL".into(),
             message: format!("Unsupported tool: {other}"),
             next_action:
-                "Use assemble_probe_timeline, hash_source, build_cache_key, transcribe_asr, or extract_keyframes."
+                "Use assemble_probe_timeline, hash_source, build_cache_key, transcribe_asr, extract_keyframes, render_frame, or crop_frame."
                     .into(),
         })
         .expect("serialize"),

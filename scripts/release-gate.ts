@@ -4,6 +4,10 @@ import { execSync } from 'node:child_process';
 import { runDoctor } from '../src/doctor.js';
 import { transcribeViaRustEngine } from '../src/engine/rust-asr.js';
 import { extractKeyframesViaRustEngine } from '../src/engine/rust-frames.js';
+import {
+  cropFrameViaRustEngine,
+  renderFrameViaRustEngine,
+} from '../src/engine/rust-video-evidence.js';
 import { buildTimelineDocument } from '../src/video/readCoordinator.js';
 import { isBinaryAvailable } from '../src/utils/exec.js';
 
@@ -164,6 +168,13 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'ffmpeg keyframe evidence extractor is present for Phase 2 frame follow-up'
   );
 
+  addCheck(
+    checks,
+    'evidence:video_evidence_handler',
+    fileExists('src/handlers/videoEvidence.ts') && fileExists('src/schemas/videoEvidence.ts'),
+    'video_evidence MCP handler and schema are present for Phase 2 frame follow-up'
+  );
+
   const doctor = await runDoctor(pkg.version);
   addCheck(
     checks,
@@ -235,6 +246,55 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
           code: keyframeResponse.ok ? undefined : keyframeResponse.code,
           message: keyframeResponse.ok ? undefined : keyframeResponse.message,
           keyframeHash,
+        }
+  );
+
+  const renderFrameResponse = renderFrameViaRustEngine({
+    videoPath: fixtureVideo,
+    timeMs: 0,
+    maxDimension: 120,
+  });
+  addCheck(
+    checks,
+    'boundary:video_evidence_render_frame',
+    ffmpegAvailable &&
+      renderFrameResponse.ok &&
+      renderFrameResponse.frame.route === 'rust-frame-render' &&
+      renderFrameResponse.frame.frame_hash.length > 0,
+    'render_frame returns citeable PNG evidence from the Rust CLI when ffmpeg is available',
+    renderFrameResponse.ok
+      ? {
+          route: renderFrameResponse.frame.route,
+          frameHash: renderFrameResponse.frame.frame_hash,
+        }
+      : {
+          code: renderFrameResponse.ok ? undefined : renderFrameResponse.code,
+          message: renderFrameResponse.ok ? undefined : renderFrameResponse.message,
+        }
+  );
+
+  const cropFrameResponse = cropFrameViaRustEngine({
+    videoPath: fixtureVideo,
+    timeMs: 0,
+    crop: { x: 10, y: 10, width: 80, height: 60 },
+    maxDimension: 120,
+  });
+  addCheck(
+    checks,
+    'boundary:video_evidence_crop_frame',
+    ffmpegAvailable &&
+      cropFrameResponse.ok &&
+      cropFrameResponse.frame.route === 'rust-frame-crop' &&
+      cropFrameResponse.frame.frame_hash.length > 0,
+    'crop_frame returns citeable cropped PNG evidence from the Rust CLI when ffmpeg is available',
+    cropFrameResponse.ok
+      ? {
+          route: cropFrameResponse.frame.route,
+          frameHash: cropFrameResponse.frame.frame_hash,
+        }
+      : {
+          code: cropFrameResponse.ok ? undefined : cropFrameResponse.code,
+          message: cropFrameResponse.ok ? undefined : cropFrameResponse.message,
         }
   );
 
