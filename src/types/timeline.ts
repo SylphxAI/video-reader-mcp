@@ -63,6 +63,15 @@ export interface TranscriptSegment {
   };
 }
 
+export interface FrameEvidence {
+  index: number;
+  time_ms: number;
+  provenance: {
+    method: 'ffmpeg_keyframe_select';
+    pict_type: 'I';
+  };
+}
+
 export interface FormatInfo {
   format_name?: string;
   duration_ms: number;
@@ -79,6 +88,7 @@ export interface TimelineDocument {
   scenes: SceneInfo[];
   subtitles: SubtitleCue[];
   transcript: TranscriptSegment[];
+  keyframes: FrameEvidence[];
   warnings: string[];
 }
 

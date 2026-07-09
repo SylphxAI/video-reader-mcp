@@ -25,6 +25,7 @@ describe('fixture corpus manifest', () => {
       'subtitle-stream',
       'multi-stream',
       'corrupted-truncated',
+      'long-sample',
     ]);
   });
 

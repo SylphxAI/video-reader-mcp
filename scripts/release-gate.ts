@@ -1,6 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { runDoctor } from '../src/doctor.js';
+import { buildTimelineDocument } from '../src/video/readCoordinator.js';
+import { isBinaryAvailable } from '../src/utils/exec.js';
 
 const ARTIFACT_DIR_ENV = 'MCP_VIDEO_BENCHMARK_OUTPUT_DIR';
 const DEFAULT_ARTIFACT_DIR = 'benchmark-artifacts';
@@ -70,12 +73,18 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
   addCheck(
     checks,
     'fixtures:corpus_manifest',
-    manifest.profile === 'video_reader_fixture_corpus' && manifest.cases.length >= 4,
-    'Fixture corpus manifest documents subtitle, no-subtitle, multi-stream, and corrupted cases',
+    manifest.profile === 'video_reader_fixture_corpus' && manifest.cases.length >= 5,
+    'Fixture corpus manifest documents subtitle, no-subtitle, multi-stream, corrupted, and long-sample cases',
     { caseCount: manifest.cases.length }
   );
 
-  for (const caseId of ['no-subtitle', 'multi-stream', 'subtitle-stream', 'corrupted-truncated']) {
+  for (const caseId of [
+    'no-subtitle',
+    'multi-stream',
+    'subtitle-stream',
+    'corrupted-truncated',
+    'long-sample',
+  ]) {
     addCheck(
       checks,
       `fixtures:case:${caseId}`,
@@ -119,6 +128,13 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'Rust video-reader-core hash and cache policy engine is present'
   );
 
+  addCheck(
+    checks,
+    'evidence:frame_extractor',
+    fileExists('src/utils/frames.ts'),
+    'ffmpeg keyframe evidence extractor is present for Phase 2 frame follow-up'
+  );
+
   const doctor = await runDoctor(pkg.version);
   addCheck(
     checks,
@@ -126,6 +142,41 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     doctor.checks.find((check) => check.id === 'ffprobe')?.status === 'ok',
     'doctor reports ffprobe is available for timeline probing',
     { doctorStatus: doctor.status }
+  );
+
+  const ffmpegAvailable = await isBinaryAvailable('ffmpeg');
+  const ffprobeAvailable = await isBinaryAvailable('ffprobe');
+  let keyframeCount = 0;
+  if (ffmpegAvailable && ffprobeAvailable) {
+    try {
+      execSync(
+        `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=2 -c:v libx264 -pix_fmt yuv420p ${path.join(repoRoot, 'test/fixtures/no-subtitle.mp4')}`,
+        { stdio: 'pipe', timeout: 60_000 }
+      );
+      const document = await buildTimelineDocument(
+        path.join(repoRoot, 'test/fixtures/no-subtitle.mp4'),
+        {
+          sources: [{ path: path.join(repoRoot, 'test/fixtures/no-subtitle.mp4') }],
+          include_scenes: false,
+          include_subtitles: false,
+          include_transcript: false,
+          include_keyframes: true,
+          keyframe_limit: 4,
+        },
+        pkg.version
+      );
+      keyframeCount = document.keyframes.length;
+    } catch {
+      keyframeCount = 0;
+    }
+  }
+
+  addCheck(
+    checks,
+    'boundary:keyframe_index',
+    ffmpegAvailable && ffprobeAvailable && keyframeCount > 0,
+    'read_video include_keyframes returns reproducible I-frame locators when ffmpeg is available',
+    { keyframeCount, ffmpegAvailable, ffprobeAvailable }
   );
 
   const passed = checks.filter((check) => check.status === 'passed').length;

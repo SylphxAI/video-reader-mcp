@@ -9,6 +9,7 @@ import type { ReadVideoArgs } from '../schemas/readVideo.js';
 import type { TimelineDocument, VideoSourceResult } from '../types/timeline.js';
 import { tryAsrTranscript } from '../utils/asr.js';
 import { extractSubtitles } from '../utils/ffmpeg.js';
+import { extractKeyframes } from '../utils/frames.js';
 import {
   collectProbeWarnings,
   findSubtitleStreams,
@@ -21,6 +22,7 @@ import { resolvePath } from '../utils/pathUtils.js';
 import { detectScenes } from '../utils/scenes.js';
 
 const DEFAULT_SCENE_THRESHOLD = 0.4;
+const DEFAULT_KEYFRAME_LIMIT = 8;
 
 export const buildTimelineDocument = async (
   sourcePath: string,
@@ -32,6 +34,8 @@ export const buildTimelineDocument = async (
   const includeSubtitles = args.include_subtitles ?? true;
   const includeScenes = args.include_scenes ?? true;
   const includeTranscript = args.include_transcript ?? false;
+  const includeKeyframes = args.include_keyframes ?? false;
+  const keyframeLimit = args.keyframe_limit ?? DEFAULT_KEYFRAME_LIMIT;
   const sceneThreshold = args.scene_threshold ?? DEFAULT_SCENE_THRESHOLD;
 
   const warnings: string[] = [];
@@ -61,6 +65,8 @@ export const buildTimelineDocument = async (
       includeSubtitles,
       includeScenes,
       includeTranscript,
+      includeKeyframes,
+      keyframeLimit,
       sceneThreshold,
     });
   } else {
@@ -98,6 +104,13 @@ export const buildTimelineDocument = async (
     if (asr.warning) warnings.push(asr.warning);
   }
 
+  let keyframes: TimelineDocument['keyframes'] = [];
+  if (includeKeyframes) {
+    const extracted = await extractKeyframes(sourcePath, keyframeLimit);
+    keyframes = extracted.keyframes;
+    if (extracted.warning) warnings.push(extracted.warning);
+  }
+
   return {
     provenance: {
       source: sourcePath,
@@ -114,6 +127,7 @@ export const buildTimelineDocument = async (
     scenes,
     subtitles,
     transcript,
+    keyframes,
     warnings,
   };
 };

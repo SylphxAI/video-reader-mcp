@@ -135,6 +135,8 @@ fn handle_build_cache_key(
             include_subtitles: true,
             include_scenes: true,
             include_transcript: false,
+            include_keyframes: false,
+            keyframe_limit: 8,
             scene_threshold: 0.4,
         });
 

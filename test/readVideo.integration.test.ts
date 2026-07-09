@@ -24,7 +24,13 @@ const parseResults = (result: Awaited<ReturnType<typeof readVideo.handler>>) => 
   return JSON.parse(block.text) as {
     results: Array<{
       success: boolean;
-      data?: { warnings: string[]; streams: unknown[]; subtitles: unknown[] };
+      data?: {
+        warnings: string[];
+        streams: unknown[];
+        subtitles: unknown[];
+        keyframes?: Array<{ time_ms: number; provenance: { method: string } }>;
+        format?: { duration_ms: number };
+      };
       error?: string;
     }>;
   };
@@ -85,6 +91,35 @@ describe('read_video integration fixtures', () => {
         warning.includes('No embedded subtitle streams found')
       )
     ).toBe(true);
+  });
+
+  it('indexes keyframe locators when include_keyframes is enabled', async () => {
+    const ffmpegAvailable = await isBinaryAvailable('ffmpeg');
+    const ffprobeAvailable = await isBinaryAvailable('ffprobe');
+    if (!ffmpegAvailable || !ffprobeAvailable) {
+      return;
+    }
+
+    const result = await readVideo.handler({
+      input: {
+        sources: [{ path: noSubtitlePath }],
+        include_scenes: false,
+        include_subtitles: false,
+        include_transcript: false,
+        include_keyframes: true,
+        keyframe_limit: 4,
+      },
+      ctx: {},
+    });
+
+    expect(result).not.toMatchObject({ isError: true });
+
+    const payload = parseResults(result);
+    const data = payload.results[0]?.data;
+    expect(payload.results[0]?.success).toBe(true);
+    expect(data?.keyframes?.length).toBeGreaterThan(0);
+    expect(data?.keyframes?.[0]?.provenance.method).toBe('ffmpeg_keyframe_select');
+    expect((data?.format?.duration_ms ?? 0) >= 1500).toBe(true);
   });
 
   it('returns structured failure for truncated video fixtures', async () => {

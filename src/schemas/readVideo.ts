@@ -34,6 +34,19 @@ export const readVideoArgsSchema = z.object({
     .describe(
       'Attempt optional local ASR transcript when an adapter is installed. Defaults to false.'
     ),
+  include_keyframes: z
+    .boolean()
+    .optional()
+    .describe(
+      'Index I-frame timestamps with ffmpeg for reproducible frame evidence follow-up. Defaults to false.'
+    ),
+  keyframe_limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(64)
+    .optional()
+    .describe('Maximum number of keyframe locators to return when include_keyframes is true. Defaults to 8.'),
 });
 
 export type ReadVideoArgs = z.infer<typeof readVideoArgsSchema>;

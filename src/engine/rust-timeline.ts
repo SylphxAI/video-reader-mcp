@@ -131,6 +131,8 @@ export function buildCacheKeyViaRustEngine(
     includeSubtitles: boolean;
     includeScenes: boolean;
     includeTranscript: boolean;
+    includeKeyframes: boolean;
+    keyframeLimit: number;
     sceneThreshold: number;
   }
 ): string {
@@ -142,6 +144,8 @@ export function buildCacheKeyViaRustEngine(
       include_subtitles: options.includeSubtitles,
       include_scenes: options.includeScenes,
       include_transcript: options.includeTranscript,
+      include_keyframes: options.includeKeyframes,
+      keyframe_limit: options.keyframeLimit,
       scene_threshold: options.sceneThreshold,
     },
   }) as RustCacheKeyEnvelope;
