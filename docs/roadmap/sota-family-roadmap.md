@@ -3,6 +3,7 @@
 Status: adoption plan  
 Owner: Video Reader MCP  
 Scope: repo-local future plan and its role in the SylphxAI MCP family
+Decision record: `docs/adr/ADR-3-mcp-family-sota-roadmap.md`
 
 ## Family Role
 
