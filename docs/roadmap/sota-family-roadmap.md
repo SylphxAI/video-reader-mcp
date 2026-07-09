@@ -34,8 +34,11 @@ and transcript search, and explicit warnings for unsupported or degraded media.
 
 Rust should own timeline assembly, hashing, cache keys, stream metadata, bounded
 sampling policy, and orchestration. Native media tools remain controlled
-adapters. The TypeScript adapter can stay thin while packaging and provider
-contracts mature.
+adapters. Rust should also own MCP serving through
+`modelcontextprotocol/rust-sdk` / `rmcp`.
+
+TypeScript can remain only for generated clients, compatibility wrappers, and
+package-transition tests. It is not the target MCP adapter runtime.
 
 WASM is not the default runtime for media-heavy local work; it may be used for
 sandboxed transforms where inputs and host capabilities are bounded.
@@ -55,6 +58,7 @@ sandboxed transforms where inputs and host capabilities are bounded.
 
 - Implement native timeline model, cache keys, stream metadata, and deterministic
   scene/subtitle fixtures.
+- Add Rust MCP handlers for `read_video` and follow-up evidence operations.
 - Add large-file streaming tests.
 - Add benchmark gates for probe and timeline assembly.
 

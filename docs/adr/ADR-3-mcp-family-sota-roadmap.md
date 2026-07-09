@@ -23,9 +23,16 @@ routes, scene detection, frame evidence, media warnings, and temporal locators.
 
 - Smart Reader routes videos but does not own video timeline semantics.
 - Rust is the target for timeline assembly, hashing, cache keys, bounded
-  sampling policy, and media orchestration.
+  sampling policy, media orchestration, and MCP serving through
+  `modelcontextprotocol/rust-sdk` / `rmcp`.
 - Native media dependencies remain explicit and diagnosable.
 - Every temporal claim must be reproducible through timestamp or frame evidence.
+
+## Amendment: Rust-Native MCP Runtime
+
+The family runtime direction now targets Rust MCP servers. Video Reader MCP may
+keep TypeScript compatibility wrappers during migration, but the target MCP
+server runtime is Rust with `rmcp`.
 
 ## Verification
 
