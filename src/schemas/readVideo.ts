@@ -47,6 +47,18 @@ export const readVideoArgsSchema = z.object({
     .max(64)
     .optional()
     .describe('Maximum number of keyframe locators to return when include_keyframes is true. Defaults to 8.'),
+  include_keyframe_images: z
+    .boolean()
+    .optional()
+    .describe(
+      'When include_keyframes is true, render citeable PNG thumbnails for each keyframe. Defaults to false.'
+    ),
+  keyframe_max_dimension: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe('Maximum width or height when resizing keyframe PNG evidence.'),
 });
 
 export type ReadVideoArgs = z.infer<typeof readVideoArgsSchema>;

@@ -35,7 +35,9 @@ export const buildTimelineDocument = async (
   const includeScenes = args.include_scenes ?? true;
   const includeTranscript = args.include_transcript ?? false;
   const includeKeyframes = args.include_keyframes ?? false;
+  const includeKeyframeImages = args.include_keyframe_images ?? false;
   const keyframeLimit = args.keyframe_limit ?? DEFAULT_KEYFRAME_LIMIT;
+  const keyframeMaxDimension = args.keyframe_max_dimension;
   const sceneThreshold = args.scene_threshold ?? DEFAULT_SCENE_THRESHOLD;
 
   const warnings: string[] = [];
@@ -66,7 +68,9 @@ export const buildTimelineDocument = async (
       includeScenes,
       includeTranscript,
       includeKeyframes,
+      includeKeyframeImages,
       keyframeLimit,
+      keyframeMaxDimension,
       sceneThreshold,
     });
   } else {
@@ -106,7 +110,10 @@ export const buildTimelineDocument = async (
 
   let keyframes: TimelineDocument['keyframes'] = [];
   if (includeKeyframes) {
-    const extracted = await extractKeyframes(sourcePath, keyframeLimit);
+    const extracted = await extractKeyframes(sourcePath, keyframeLimit, {
+      includeImages: includeKeyframeImages,
+      ...(keyframeMaxDimension !== undefined ? { maxDimension: keyframeMaxDimension } : {}),
+    });
     keyframes = extracted.keyframes;
     if (extracted.warning) warnings.push(extracted.warning);
   }

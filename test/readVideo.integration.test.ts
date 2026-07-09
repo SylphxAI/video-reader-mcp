@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
+import { execSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createReadVideoHandler } from '../src/handlers/readVideo.js';
 import { execBinary, isBinaryAvailable } from '../src/utils/exec.js';
 
+const repoRoot = path.resolve(import.meta.dirname, '..');
 const fixtureDir = path.join(import.meta.dirname, 'fixtures');
 const noSubtitlePath = path.join(fixtureDir, 'no-subtitle.mp4');
 const corruptedPath = path.join(fixtureDir, 'corrupted-truncated.mp4');
@@ -37,6 +39,8 @@ const parseResults = (result: Awaited<ReturnType<typeof readVideo.handler>>) => 
 };
 
 beforeAll(async () => {
+  execSync('cargo build -q', { cwd: repoRoot, stdio: 'pipe', timeout: 120_000 });
+
   const ffmpegAvailable = await isBinaryAvailable('ffmpeg');
   if (!ffmpegAvailable) {
     return;
@@ -62,7 +66,7 @@ beforeAll(async () => {
 
   const bytes = await readFile(noSubtitlePath);
   await writeFile(corruptedPath, bytes.subarray(0, Math.min(bytes.length, 512)));
-});
+}, 120_000);
 
 describe('read_video integration fixtures', () => {
   it('reads a generated no-subtitle clip when ffmpeg is available', async () => {
@@ -99,6 +103,24 @@ describe('read_video integration fixtures', () => {
     if (!ffmpegAvailable || !ffprobeAvailable) {
       return;
     }
+
+    await execBinary(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=blue:s=160x120:d=2',
+        '-c:v',
+        'libx264',
+        '-pix_fmt',
+        'yuv420p',
+        noSubtitlePath,
+      ],
+      { timeoutMs: 60_000 }
+    );
 
     const result = await readVideo.handler({
       input: {

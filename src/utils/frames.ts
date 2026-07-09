@@ -1,3 +1,7 @@
+import {
+  extractKeyframesViaRustEngine,
+  shouldUseRustFramesEngine,
+} from '../engine/rust-frames.js';
 import type { FrameEvidence } from '../types/timeline.js';
 import { execBinary, isBinaryAvailable } from './exec.js';
 
@@ -26,8 +30,33 @@ export const parseKeyframeFilterOutput = (stderr: string): FrameEvidence[] => {
 
 export const extractKeyframes = async (
   videoPath: string,
-  limit = 8
+  limit = 8,
+  options: {
+    includeImages?: boolean | undefined;
+    maxDimension?: number | undefined;
+  } = {}
 ): Promise<{ keyframes: FrameEvidence[]; warning?: string }> => {
+  const boundedLimit = Math.max(1, Math.min(limit, 64));
+  const includeImages = options.includeImages ?? false;
+
+  if (shouldUseRustFramesEngine()) {
+    const response = extractKeyframesViaRustEngine({
+      videoPath,
+      limit: boundedLimit,
+      includeImages,
+      ...(options.maxDimension !== undefined ? { maxDimension: options.maxDimension } : {}),
+    });
+
+    if (response.ok) {
+      return { keyframes: response.keyframes };
+    }
+
+    return {
+      keyframes: [],
+      warning: `Keyframe extraction failed: ${response.message}`,
+    };
+  }
+
   const available = await isBinaryAvailable('ffmpeg');
   if (!available) {
     return {
@@ -35,8 +64,6 @@ export const extractKeyframes = async (
       warning: 'ffmpeg is not installed; keyframe index extraction skipped.',
     };
   }
-
-  const boundedLimit = Math.max(1, Math.min(limit, 64));
 
   try {
     const { stderr } = await execBinary(

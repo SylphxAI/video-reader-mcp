@@ -70,6 +70,12 @@ export interface FrameEvidence {
     method: 'ffmpeg_keyframe_select';
     pict_type: 'I';
   };
+  route?: string;
+  frame_hash?: string;
+  mime?: string;
+  width?: number;
+  height?: number;
+  image_base64?: string;
 }
 
 export interface FormatInfo {

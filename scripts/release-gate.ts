@@ -3,6 +3,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { runDoctor } from '../src/doctor.js';
 import { transcribeViaRustEngine } from '../src/engine/rust-asr.js';
+import { extractKeyframesViaRustEngine } from '../src/engine/rust-frames.js';
 import { buildTimelineDocument } from '../src/video/readCoordinator.js';
 import { isBinaryAvailable } from '../src/utils/exec.js';
 
@@ -136,6 +137,13 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'Rust video-reader-core ASR orchestration engine is present'
   );
 
+  addCheck(
+    checks,
+    'rust:frames_core',
+    fileExists('crates/video-reader-core/src/frames.rs'),
+    'Rust video-reader-core keyframe PNG evidence engine is present'
+  );
+
   const asrResponse = transcribeViaRustEngine(
     path.join(repoRoot, 'test/fixtures/no-subtitle.mp4')
   );
@@ -167,26 +175,31 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
 
   const ffmpegAvailable = await isBinaryAvailable('ffmpeg');
   const ffprobeAvailable = await isBinaryAvailable('ffprobe');
+  const fixtureVideo = path.join(repoRoot, 'test/fixtures/no-subtitle.mp4');
   let keyframeCount = 0;
+  let keyframeHash: string | undefined;
   if (ffmpegAvailable && ffprobeAvailable) {
     try {
       execSync(
-        `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=2 -c:v libx264 -pix_fmt yuv420p ${path.join(repoRoot, 'test/fixtures/no-subtitle.mp4')}`,
+        `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=2 -c:v libx264 -pix_fmt yuv420p ${fixtureVideo}`,
         { stdio: 'pipe', timeout: 60_000 }
       );
       const document = await buildTimelineDocument(
-        path.join(repoRoot, 'test/fixtures/no-subtitle.mp4'),
+        fixtureVideo,
         {
-          sources: [{ path: path.join(repoRoot, 'test/fixtures/no-subtitle.mp4') }],
+          sources: [{ path: fixtureVideo }],
           include_scenes: false,
           include_subtitles: false,
           include_transcript: false,
           include_keyframes: true,
+          include_keyframe_images: true,
           keyframe_limit: 4,
+          keyframe_max_dimension: 120,
         },
         pkg.version
       );
       keyframeCount = document.keyframes.length;
+      keyframeHash = document.keyframes[0]?.frame_hash;
     } catch {
       keyframeCount = 0;
     }
@@ -198,6 +211,31 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     ffmpegAvailable && ffprobeAvailable && keyframeCount > 0,
     'read_video include_keyframes returns reproducible I-frame locators when ffmpeg is available',
     { keyframeCount, ffmpegAvailable, ffprobeAvailable }
+  );
+
+  const keyframeResponse = extractKeyframesViaRustEngine({
+    videoPath: fixtureVideo,
+    limit: 2,
+    includeImages: true,
+    maxDimension: 120,
+  });
+  addCheck(
+    checks,
+    'boundary:keyframe_png',
+    ffmpegAvailable &&
+      keyframeResponse.ok &&
+      (keyframeResponse.keyframes[0]?.frame_hash?.length ?? 0) > 0,
+    'extract_keyframes returns citeable PNG evidence from the Rust CLI when ffmpeg is available',
+    keyframeResponse.ok
+      ? {
+          route: keyframeResponse.keyframes[0]?.route,
+          frameHash: keyframeResponse.keyframes[0]?.frame_hash,
+        }
+      : {
+          code: keyframeResponse.ok ? undefined : keyframeResponse.code,
+          message: keyframeResponse.ok ? undefined : keyframeResponse.message,
+          keyframeHash,
+        }
   );
 
   const passed = checks.filter((check) => check.status === 'passed').length;

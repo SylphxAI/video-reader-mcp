@@ -18,8 +18,12 @@ pub struct CacheOptions {
     pub include_transcript: bool,
     #[serde(default)]
     pub include_keyframes: bool,
+    #[serde(default)]
+    pub include_keyframe_images: bool,
     #[serde(default = "default_keyframe_limit")]
     pub keyframe_limit: u32,
+    #[serde(default)]
+    pub keyframe_max_dimension: Option<u32>,
     #[serde(default = "default_scene_threshold")]
     pub scene_threshold: f64,
 }
@@ -74,7 +78,9 @@ mod tests {
             include_scenes: true,
             include_transcript: false,
             include_keyframes: false,
+            include_keyframe_images: false,
             keyframe_limit: 8,
+            keyframe_max_dimension: None,
             scene_threshold: 0.4,
         };
 

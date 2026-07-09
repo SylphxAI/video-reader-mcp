@@ -132,7 +132,9 @@ export function buildCacheKeyViaRustEngine(
     includeScenes: boolean;
     includeTranscript: boolean;
     includeKeyframes: boolean;
+    includeKeyframeImages: boolean;
     keyframeLimit: number;
+    keyframeMaxDimension?: number | undefined;
     sceneThreshold: number;
   }
 ): string {
@@ -145,7 +147,11 @@ export function buildCacheKeyViaRustEngine(
       include_scenes: options.includeScenes,
       include_transcript: options.includeTranscript,
       include_keyframes: options.includeKeyframes,
+      include_keyframe_images: options.includeKeyframeImages,
       keyframe_limit: options.keyframeLimit,
+      ...(options.keyframeMaxDimension !== undefined
+        ? { keyframe_max_dimension: options.keyframeMaxDimension }
+        : {}),
       scene_threshold: options.sceneThreshold,
     },
   }) as RustCacheKeyEnvelope;

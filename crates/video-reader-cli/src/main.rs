@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use video_reader_core::asr::{transcribe_video, AsrErrorCode};
+use video_reader_core::frames::{extract_keyframes, FrameErrorCode};
 use video_reader_core::hash::{build_cache_key, hash_source_file, CacheOptions};
 use video_reader_core::timeline::{assemble_probe_timeline, AssembleOptions};
 use video_reader_core::{ENGINE_NAME, ENGINE_VERSION};
@@ -43,6 +44,14 @@ struct AsrSuccessEnvelope {
     engine: &'static str,
     version: &'static str,
     asr: video_reader_core::asr::AsrResult,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct KeyframeSuccessEnvelope {
+    status: &'static str,
+    engine: &'static str,
+    version: &'static str,
+    keyframes: Vec<video_reader_core::frames::KeyframeEvidence>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -113,6 +122,63 @@ fn handle_hash_source(input: &serde_json::Value) -> Result<HashSuccessEnvelope, 
         version: ENGINE_VERSION,
         source_hash,
     })
+}
+
+fn frame_error_code(code: FrameErrorCode) -> &'static str {
+    match code {
+        FrameErrorCode::InvalidParams => "INVALID_PARAMS",
+        FrameErrorCode::FfmpegUnavailable => "FFMPEG_UNAVAILABLE",
+        FrameErrorCode::ExtractionFailed => "EXTRACTION_FAILED",
+    }
+}
+
+fn handle_extract_keyframes(
+    input: &serde_json::Value,
+) -> Result<KeyframeSuccessEnvelope, ErrorEnvelope> {
+    let path = input
+        .get("path")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: "path is required".into(),
+            next_action: "Pass a readable local video file path.".into(),
+        })?;
+
+    let limit = input
+        .get("limit")
+        .and_then(|value| value.as_u64())
+        .unwrap_or(8) as u32;
+
+    let include_images = input
+        .get("include_images")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+
+    let max_dimension = input
+        .get("max_dimension")
+        .and_then(|value| value.as_u64())
+        .map(|value| value as u32);
+
+    match extract_keyframes(
+        PathBuf::from(path).as_path(),
+        limit,
+        include_images,
+        max_dimension,
+    ) {
+        Ok(keyframes) => Ok(KeyframeSuccessEnvelope {
+            status: "ok",
+            engine: ENGINE_NAME,
+            version: ENGINE_VERSION,
+            keyframes,
+        }),
+        Err(error) => Err(ErrorEnvelope {
+            status: "error",
+            code: frame_error_code(error.code).into(),
+            message: error.message,
+            next_action: "Install ffmpeg and provide a readable video with decodable I-frames.".into(),
+        }),
+    }
 }
 
 fn asr_error_code(code: AsrErrorCode) -> &'static str {
@@ -187,7 +253,9 @@ fn handle_build_cache_key(
             include_scenes: true,
             include_transcript: false,
             include_keyframes: false,
+            include_keyframe_images: false,
             keyframe_limit: 8,
+            keyframe_max_dimension: None,
             scene_threshold: 0.4,
         });
 
@@ -238,12 +306,16 @@ fn main() {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),
             Err(error) => serde_json::to_string(&error).expect("serialize"),
         },
+        "extract_keyframes" => match handle_extract_keyframes(&request.input) {
+            Ok(success) => serde_json::to_string(&success).expect("serialize"),
+            Err(error) => serde_json::to_string(&error).expect("serialize"),
+        },
         other => serde_json::to_string(&ErrorEnvelope {
             status: "error",
             code: "UNSUPPORTED_TOOL".into(),
             message: format!("Unsupported tool: {other}"),
             next_action:
-                "Use assemble_probe_timeline, hash_source, build_cache_key, or transcribe_asr."
+                "Use assemble_probe_timeline, hash_source, build_cache_key, transcribe_asr, or extract_keyframes."
                     .into(),
         })
         .expect("serialize"),
