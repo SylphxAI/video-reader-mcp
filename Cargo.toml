@@ -1,5 +1,9 @@
 [workspace]
-members = ["crates/video-reader-core", "crates/video-reader-cli"]
+members = [
+    "crates/video-reader-core",
+    "crates/video-reader-cli",
+    "crates/video-reader-mcp-server",
+]
 resolver = "2"
 
 [workspace.package]

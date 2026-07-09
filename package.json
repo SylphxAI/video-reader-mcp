@@ -9,9 +9,10 @@
   },
   "license": "MIT",
   "bin": {
-    "video-reader-mcp": "./dist/index.js"
+    "video-reader-mcp": "./bin/video-reader-mcp"
   },
   "files": [
+    "bin/",
     "dist/",
     "README.md",
     "LICENSE"
@@ -39,6 +40,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "build:rust": "cargo build --release -p video-reader-core -p video-reader-cli -p video-reader-mcp-server && bun scripts/stage-rust-mcp.ts",
+    "test:rust": "cargo test",
     "build": "tsc && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "bun test",

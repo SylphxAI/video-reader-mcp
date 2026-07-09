@@ -8,7 +8,9 @@ use video_reader_core::frames::{
 };
 use video_reader_core::hash::{build_cache_key, hash_source_file, CacheOptions};
 use video_reader_core::timeline::{assemble_probe_timeline, AssembleOptions};
-use video_reader_core::{ENGINE_NAME, ENGINE_VERSION};
+use video_reader_core::{
+    read_video_from_value, video_evidence_from_value, ENGINE_NAME, ENGINE_VERSION, READ_VIDEO_ROUTE,
+};
 
 #[derive(Debug, Deserialize)]
 struct Request {
@@ -62,6 +64,23 @@ struct FrameRenderSuccessEnvelope {
     engine: &'static str,
     version: &'static str,
     frame: video_reader_core::frames::FrameRenderEvidence,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct ReadVideoSuccessEnvelope {
+    status: &'static str,
+    engine: &'static str,
+    version: &'static str,
+    route: &'static str,
+    results: Vec<video_reader_core::read_video::VideoSourceResult>,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct VideoEvidenceSuccessEnvelope {
+    status: &'static str,
+    engine: &'static str,
+    version: &'static str,
+    results: Vec<video_reader_core::video_evidence::VideoEvidenceSourceResult>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -132,6 +151,20 @@ fn handle_hash_source(input: &serde_json::Value) -> Result<HashSuccessEnvelope, 
         version: ENGINE_VERSION,
         source_hash,
     })
+}
+
+fn read_video_code(code: video_reader_core::ReadVideoErrorCode) -> &'static str {
+    match code {
+        video_reader_core::ReadVideoErrorCode::InvalidParams => "INVALID_PARAMS",
+        video_reader_core::ReadVideoErrorCode::InvalidRequest => "INVALID_REQUEST",
+    }
+}
+
+fn video_evidence_code(code: video_reader_core::VideoEvidenceErrorCode) -> &'static str {
+    match code {
+        video_reader_core::VideoEvidenceErrorCode::InvalidParams => "INVALID_PARAMS",
+        video_reader_core::VideoEvidenceErrorCode::InvalidRequest => "INVALID_REQUEST",
+    }
 }
 
 fn frame_error_code(code: FrameErrorCode) -> &'static str {
@@ -416,6 +449,39 @@ fn main() {
     };
 
     let output = match request.tool.as_str() {
+        "read_video" => match read_video_from_value(&request.input) {
+            Ok(response) => serde_json::to_string(&ReadVideoSuccessEnvelope {
+                status: "ok",
+                engine: ENGINE_NAME,
+                version: ENGINE_VERSION,
+                route: READ_VIDEO_ROUTE,
+                results: response.results,
+            })
+            .expect("serialize"),
+            Err(error) => serde_json::to_string(&ErrorEnvelope {
+                status: "error",
+                code: read_video_code(error.code).into(),
+                message: error.message,
+                next_action: "Provide readable local video sources and ensure ffprobe is installed.".into(),
+            })
+            .expect("serialize"),
+        },
+        "video_evidence" => match video_evidence_from_value(&request.input) {
+            Ok(response) => serde_json::to_string(&VideoEvidenceSuccessEnvelope {
+                status: "ok",
+                engine: ENGINE_NAME,
+                version: ENGINE_VERSION,
+                results: response.results,
+            })
+            .expect("serialize"),
+            Err(error) => serde_json::to_string(&ErrorEnvelope {
+                status: "error",
+                code: video_evidence_code(error.code).into(),
+                message: error.message,
+                next_action: "Use render_frame or crop_frame with ffmpeg available.".into(),
+            })
+            .expect("serialize"),
+        },
         "assemble_probe_timeline" => match handle_assemble_probe_timeline(&request.input) {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),
             Err(error) => serde_json::to_string(&error).expect("serialize"),
@@ -449,7 +515,7 @@ fn main() {
             code: "UNSUPPORTED_TOOL".into(),
             message: format!("Unsupported tool: {other}"),
             next_action:
-                "Use assemble_probe_timeline, hash_source, build_cache_key, transcribe_asr, extract_keyframes, render_frame, or crop_frame."
+                "Use read_video, video_evidence, assemble_probe_timeline, hash_source, build_cache_key, transcribe_asr, extract_keyframes, render_frame, or crop_frame."
                     .into(),
         })
         .expect("serialize"),

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { runDoctor } from '../src/doctor.js';
 import { transcribeViaRustEngine } from '../src/engine/rust-asr.js';
 import { extractKeyframesViaRustEngine } from '../src/engine/rust-frames.js';
@@ -297,6 +297,56 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
           message: cropFrameResponse.ok ? undefined : cropFrameResponse.message,
         }
   );
+
+  const binWrapper = readFileSync(path.join(repoRoot, 'bin/video-reader-mcp'), 'utf8');
+  addCheck(
+    checks,
+    'mcp:rust_adapter_default',
+    binWrapper.includes('video-reader-mcp-server') &&
+      binWrapper.includes('resolve_rust_bin') &&
+      binWrapper.includes('use_ts_transport'),
+    'Default npm bin launches the Rust rmcp MCP server; TypeScript adapter is opt-in only'
+  );
+
+  const matrixProbe = spawnSync('bun', ['test', 'test/shippedPath.matrix.test.ts'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      VIDEO_READER_ALLOW_LEGACY_ENGINE: '',
+    },
+    timeout: 300_000,
+  });
+  addCheck(
+    checks,
+    'boundary:rust_cli_engine',
+    fileExists('crates/video-reader-mcp-server/src/tool_routes.rs') && matrixProbe.status === 0,
+    'Shipped-path matrix test proves primary tools route through Rust core without legacy runtime',
+    matrixProbe.status === 0
+      ? { exitCode: 0 }
+      : {
+          exitCode: matrixProbe.status,
+          stderr: matrixProbe.stderr?.slice(-2000),
+          stdout: matrixProbe.stdout?.slice(-2000),
+        }
+  );
+
+  try {
+    execSync('cargo build --release -p video-reader-mcp-server', {
+      cwd: repoRoot,
+      stdio: 'pipe',
+      timeout: 300_000,
+    });
+    addCheck(
+      checks,
+      'rust:mcp_server_crate',
+      fileExists('target/release/video-reader-mcp-server'),
+      'video-reader-mcp-server rmcp crate builds for release'
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    addCheck(checks, 'rust:mcp_server_crate', false, `video-reader-mcp-server build failed: ${message}`);
+  }
 
   const passed = checks.filter((check) => check.status === 'passed').length;
   const failed = checks.length - passed;
