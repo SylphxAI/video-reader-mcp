@@ -352,7 +352,8 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     checks,
     'contract:reader_evidence_dep',
     typeof pkg.dependencies?.['@sylphx/reader-evidence'] === 'string' &&
-      fileExists('node_modules/@sylphx/reader-evidence/src/envelope.ts'),
+      (fileExists('node_modules/@sylphx/reader-evidence/src/envelope.ts') ||
+        fileExists('node_modules/@sylphx/reader-evidence/src/index.ts')),
     'video-reader depends on @sylphx/reader-evidence shared schema package',
     { dependency: pkg.dependencies?.['@sylphx/reader-evidence'] }
   );
