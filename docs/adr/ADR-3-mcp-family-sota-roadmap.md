@@ -1,7 +1,7 @@
 # ADR-3: Adopt Video Reader MCP Family SOTA Roadmap
 
 Date: 2026-07-09
-Status: Proposed in PR #3
+Status: Accepted
 Slug: mcp-family-sota-roadmap
 
 ## Context
