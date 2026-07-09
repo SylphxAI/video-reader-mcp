@@ -105,6 +105,20 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'examples/read-video-request.json documents a read_video call'
   );
 
+  addCheck(
+    checks,
+    'rust:timeline_core',
+    fileExists('crates/video-reader-core/src/timeline.rs'),
+    'Rust video-reader-core timeline assembly engine is present'
+  );
+
+  addCheck(
+    checks,
+    'rust:hash_policy',
+    fileExists('crates/video-reader-core/src/hash.rs'),
+    'Rust video-reader-core hash and cache policy engine is present'
+  );
+
   const doctor = await runDoctor(pkg.version);
   addCheck(
     checks,

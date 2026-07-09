@@ -42,6 +42,7 @@
     "build": "tsc && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "bun test",
+    "test:rust-timeline": "cargo test && bun test test/rustTimeline.boundary.test.ts",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "sync:server-json": "bun scripts/sync-server-json.ts",

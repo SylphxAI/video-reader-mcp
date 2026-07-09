@@ -1,4 +1,10 @@
 import { access } from 'node:fs/promises';
+import {
+  assembleProbeTimelineViaRustEngine,
+  buildCacheKeyViaRustEngine,
+  hashSourceViaRustEngine,
+  shouldUseRustTimelineEngine,
+} from '../engine/rust-timeline.js';
 import type { ReadVideoArgs } from '../schemas/readVideo.js';
 import type { TimelineDocument, VideoSourceResult } from '../types/timeline.js';
 import { tryAsrTranscript } from '../utils/asr.js';
@@ -31,15 +37,44 @@ export const buildTimelineDocument = async (
   const warnings: string[] = [];
   const probe = await runFfprobe(sourcePath);
 
-  warnings.push(...collectProbeWarnings(probe, includeStreams));
+  let format: TimelineDocument['format'];
+  let streams: TimelineDocument['streams'];
+  let chapters: TimelineDocument['chapters'];
+  let assemblyRoute = 'typescript-timeline-v1';
+  let sourceHash: string | undefined;
+  let cacheKey: string | undefined;
 
-  const format = {
-    ...(probe.format.format_name ? { format_name: probe.format.format_name } : {}),
-    duration_ms: secondsToMs(probe.format.duration),
-    ...(probe.format.bit_rate ? { bit_rate: Number.parseInt(probe.format.bit_rate, 10) } : {}),
-    ...(probe.format.size ? { size_bytes: Number.parseInt(probe.format.size, 10) } : {}),
-    ...(probe.format.tags ? { tags: probe.format.tags } : {}),
-  };
+  if (shouldUseRustTimelineEngine()) {
+    const assembled = assembleProbeTimelineViaRustEngine(probe, {
+      includeStreams,
+      includeChapters,
+    });
+    format = assembled.format;
+    streams = assembled.streams;
+    chapters = assembled.chapters;
+    warnings.push(...assembled.warnings);
+    assemblyRoute = assembled.route;
+    sourceHash = hashSourceViaRustEngine(sourcePath);
+    cacheKey = buildCacheKeyViaRustEngine(sourceHash, {
+      includeStreams,
+      includeChapters,
+      includeSubtitles,
+      includeScenes,
+      includeTranscript,
+      sceneThreshold,
+    });
+  } else {
+    warnings.push(...collectProbeWarnings(probe, includeStreams));
+    format = {
+      ...(probe.format.format_name ? { format_name: probe.format.format_name } : {}),
+      duration_ms: secondsToMs(probe.format.duration),
+      ...(probe.format.bit_rate ? { bit_rate: Number.parseInt(probe.format.bit_rate, 10) } : {}),
+      ...(probe.format.size ? { size_bytes: Number.parseInt(probe.format.size, 10) } : {}),
+      ...(probe.format.tags ? { tags: probe.format.tags } : {}),
+    };
+    streams = includeStreams ? mapStreams(probe.streams) : [];
+    chapters = includeChapters ? mapChapters(probe.chapters) : [];
+  }
 
   let subtitles: TimelineDocument['subtitles'] = [];
   if (includeSubtitles) {
@@ -69,10 +104,13 @@ export const buildTimelineDocument = async (
       tool: 'read_video',
       version,
       extracted_at: new Date().toISOString(),
+      ...(sourceHash ? { source_hash: sourceHash } : {}),
+      ...(cacheKey ? { cache_key: cacheKey } : {}),
+      ...(shouldUseRustTimelineEngine() ? { assembly_route: assemblyRoute } : {}),
     },
     format,
-    streams: includeStreams ? mapStreams(probe.streams) : [],
-    chapters: includeChapters ? mapChapters(probe.chapters) : [],
+    streams,
+    chapters,
     scenes,
     subtitles,
     transcript,

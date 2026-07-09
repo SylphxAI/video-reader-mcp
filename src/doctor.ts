@@ -1,4 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { resolveRustCliBinary } from './engine/rust-timeline.js';
 import { isBinaryAvailable } from './utils/exec.js';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 export type DoctorStatus = 'ok' | 'warn' | 'fail';
 
@@ -34,6 +41,48 @@ const probeBinary = async (id: string, binary: string, required: boolean): Promi
   };
 };
 
+const probeRustTimelineCli = (): DoctorCheck => {
+  const binary = resolveRustCliBinary();
+  if (binary !== 'video-reader-cli' && existsSync(binary)) {
+    const probe = spawnSync(binary, [], {
+      input: JSON.stringify({
+        tool: 'build_cache_key',
+        input: {
+          source_hash: 'abc123',
+          options: { include_streams: true, include_chapters: true },
+        },
+      }),
+      encoding: 'utf8',
+      timeout: 5_000,
+    });
+
+    if (probe.status === 0) {
+      return {
+        id: 'rust_timeline_cli',
+        status: 'ok',
+        message: `Rust timeline CLI is available at ${binary}.`,
+      };
+    }
+  }
+
+  const release = path.join(here, '../target/release/video-reader-cli');
+  const debug = path.join(here, '../target/debug/video-reader-cli');
+  if (existsSync(release) || existsSync(debug)) {
+    return {
+      id: 'rust_timeline_cli',
+      status: 'ok',
+      message: 'Rust timeline CLI is built locally.',
+    };
+  }
+
+  return {
+    id: 'rust_timeline_cli',
+    status: 'warn',
+    message:
+      'Rust timeline CLI is not built. Run `cargo build --release` to enable VIDEO_READER_USE_RUST_TIMELINE=1.',
+  };
+};
+
 const probeNode = (): DoctorCheck => {
   const version = process.versions.node;
   const major = Number.parseInt(version.split('.')[0] ?? '0', 10);
@@ -65,6 +114,7 @@ const aggregateStatus = (checks: DoctorCheck[]): DoctorReport['status'] => {
 export async function runDoctor(version: string): Promise<DoctorReport> {
   const checks = [
     probeNode(),
+    probeRustTimelineCli(),
     await probeBinary('ffprobe', 'ffprobe', true),
     await probeBinary('ffmpeg', 'ffmpeg', false),
   ];

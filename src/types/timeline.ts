@@ -3,6 +3,9 @@ export interface Provenance {
   tool: 'read_video';
   version: string;
   extracted_at: string;
+  source_hash?: string;
+  cache_key?: string;
+  assembly_route?: string;
 }
 
 export interface StreamInfo {

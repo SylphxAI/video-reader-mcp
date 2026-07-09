@@ -47,7 +47,7 @@ not a slideshow summary.**
 | Scene changes guessed from captions | Optional ffmpeg scene filter with timestamp evidence |
 | Missing audio / VFR silently ignored | Warnings for missing ffmpeg/ffprobe, VFR, missing audio, skipped ASR |
 | Cloud API by default | **Local-first** — ffprobe + ffmpeg on your machine |
-| Ship and pray | **18** tests on parsers, fixture corpus, doctor, release gate, and integration |
+| Ship and pray | **20** tests on parsers, fixture corpus, doctor, release gate, and integration |
 
 ## See it work
 
