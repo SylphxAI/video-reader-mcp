@@ -7,6 +7,7 @@ Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, trans
 - Lifecycle: `v0.1`
 - Layer: `tooling`
 - Portfolio ADR: [pdf-reader-mcp ADR-0004](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/adr/0004-reader-portfolio-architecture.md)
+- SOTA family roadmap: [`docs/roadmap/sota-family-roadmap.md`](docs/roadmap/sota-family-roadmap.md)
 
 ## Goals
 

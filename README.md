@@ -6,6 +6,8 @@
 
 Orchestrated by [smart-reader-mcp](https://github.com/SylphxAI/smart-reader-mcp) — portfolio ADR lives there, not in pdf-reader-mcp.
 
+SOTA family roadmap: [docs/roadmap/sota-family-roadmap.md](docs/roadmap/sota-family-roadmap.md).
+
 | Repository | Role |
 | --- | --- |
 | [pdf-reader-mcp](https://github.com/SylphxAI/pdf-reader-mcp) | PDF (production) |
