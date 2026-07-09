@@ -12,4 +12,6 @@ docs/.vitepress/dist
 
 # Test Reports
 test-report.junit.xml
+test/fixtures/*.mp4
+benchmark-artifacts/*.json
 .vercel

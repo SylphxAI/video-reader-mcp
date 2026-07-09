@@ -13,7 +13,7 @@ boundaries, and warnings you can cite without frame-by-frame vision LLM calls.
 [![CI/CD](https://img.shields.io/github/actions/workflow/status/SylphxAI/video-reader-mcp/ci.yml?style=flat-square&label=CI/CD)](https://github.com/SylphxAI/video-reader-mcp/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue.svg?style=flat-square)](https://www.typescriptlang.org/)
 
-**Local-first** · **One smart `read_video` call** · **Timeline evidence + provenance** · **10 tests**
+**Local-first** · **One smart `read_video` call** · **Timeline evidence + provenance** · **20 tests**
 
 [⭐ Star this repo](https://github.com/SylphxAI/video-reader-mcp) if agents should read video timelines with proof, not sampled frame captions.
 · [Quick start](#quick-start) · [See it work](#see-it-work) · [Why not frame-by-frame vision?](#why-not-frame-by-frame-vision)
@@ -47,7 +47,7 @@ not a slideshow summary.**
 | Scene changes guessed from captions | Optional ffmpeg scene filter with timestamp evidence |
 | Missing audio / VFR silently ignored | Warnings for missing ffmpeg/ffprobe, VFR, missing audio, skipped ASR |
 | Cloud API by default | **Local-first** — ffprobe + ffmpeg on your machine |
-| Ship and pray | **10** unit tests on parsers; integration optional locally |
+| Ship and pray | **18** tests on parsers, fixture corpus, doctor, release gate, and integration |
 
 ## See it work
 
@@ -170,6 +170,8 @@ cd video-reader-mcp
 bun install
 bun run build
 bun test
+bun run doctor
+bun run benchmark:release-gate
 ```
 
 Useful checks:
@@ -177,10 +179,12 @@ Useful checks:
 ```bash
 bun run check
 bun run typecheck
+bun run benchmark:release-gate
 ```
 
-Unit tests mock parsers and do not require ffmpeg in CI. Integration with real
-media is optional locally.
+Example `read_video` requests live in [`examples/`](examples/). CI runs parser,
+fixture corpus, doctor, and release-gate checks; integration tests exercise ffmpeg
+when available on the runner.
 
 ## Support
 

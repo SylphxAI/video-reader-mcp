@@ -1,0 +1,20 @@
+{
+  "streams": [
+    {
+      "index": 0,
+      "codec_name": "h264",
+      "codec_type": "video",
+      "width": 160,
+      "height": 120,
+      "avg_frame_rate": "25/1",
+      "r_frame_rate": "25/1"
+    }
+  ],
+  "format": {
+    "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+    "duration": "2.0",
+    "bit_rate": "120000",
+    "size": "30000"
+  },
+  "chapters": []
+}

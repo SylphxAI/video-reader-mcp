@@ -1,0 +1,8 @@
+{
+  "sources": [{ "path": "/absolute/path/to/clip.mp4" }],
+  "include_streams": true,
+  "include_chapters": true,
+  "include_subtitles": true,
+  "include_scenes": true,
+  "include_transcript": false
+}

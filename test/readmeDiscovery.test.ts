@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'bun:test';
+import { existsSync, readFileSync } from 'node:fs';
 
 const readText = (path: string) => readFileSync(path, 'utf8');
 
@@ -9,7 +9,7 @@ describe('README discovery surfaces', () => {
 
     expect(readme).toContain('Did it read the timeline?');
     expect(readme).toContain('## Why not frame-by-frame vision?');
-    expect(readme).toContain('10 tests');
+    expect(readme).toContain('20 tests');
     expect(readme).toMatch(/Star the repo|Star this repo/);
     expect(readme).not.toMatch(/Listed on \[MCP Servers\]/);
     expect(readme).toContain('Not listed yet');

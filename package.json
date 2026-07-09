@@ -49,7 +49,9 @@
     "start": "node dist/index.js",
     "clean": "rm -rf dist coverage",
     "prepublishOnly": "bun run clean && bun run build",
-    "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish"
+    "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish",
+    "doctor": "bun run src/index.ts doctor",
+    "benchmark:release-gate": "bun scripts/release-gate.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
