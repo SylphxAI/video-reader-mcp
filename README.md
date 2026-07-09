@@ -162,6 +162,23 @@ npx @sylphx/video-reader-mcp
 MCP_TRANSPORT=http MCP_HTTP_PORT=8080 node dist/index.js
 ```
 
+## Security model
+
+- **Local-first** — `read_video` inspects local files; remote URLs are not fetched by default.
+- **ffprobe/ffmpeg boundary** — probe and frame tools shell out to configured binaries on PATH; missing tools return explicit errors.
+- **Fixture corpus** — CI validates parser and safety fixtures; corrupted inputs fail closed with structured diagnostics.
+- **Evidence envelope** — timestamps, frame indices, and extraction routes are preserved so agents can verify claims.
+
+## Release proof
+
+Claims are backed by CI `benchmark:release-gate`, fixture corpus checks, and the shipped-path matrix (Rust-default primary tools).
+
+```bash
+bun run benchmark:release-gate
+```
+
+Artifact: `benchmark-artifacts/video_reader_release_gate.json` — must report `status: passed` before release.
+
 ## Development
 
 ```bash
