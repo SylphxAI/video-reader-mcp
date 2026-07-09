@@ -15,6 +15,8 @@ boundaries, and warnings you can cite without frame-by-frame vision LLM calls.
 
 **Local-first** · **One smart `read_video` call** · **Timeline evidence + provenance** · **20 tests**
 
+SOTA family roadmap: [docs/roadmap/sota-family-roadmap.md](docs/roadmap/sota-family-roadmap.md).
+
 [⭐ Star this repo](https://github.com/SylphxAI/video-reader-mcp) if agents should read video timelines with proof, not sampled frame captions.
 · [Quick start](#quick-start) · [See it work](#see-it-work) · [Why not frame-by-frame vision?](#why-not-frame-by-frame-vision)
 
