@@ -63,6 +63,19 @@ const readJson = (relativePath: string): unknown =>
 export async function buildReleaseGateReport(artifactDir: string): Promise<ReleaseGateReport> {
   const checks: GateCheck[] = [];
   const pkg = readJson('package.json') as { version: string; bin?: Record<string, string>; dependencies?: Record<string, string> };
+  // Ensure generated corpus video exists for boundary checks that run before ffmpeg-gated keyframe block.
+  const earlyFixtureVideo = path.join(repoRoot, 'test/fixtures/no-subtitle.mp4');
+  if (!fileExists('test/fixtures/no-subtitle.mp4')) {
+    try {
+      execSync(
+        `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=2 -c:v libx264 -pix_fmt yuv420p ${earlyFixtureVideo}`,
+        { stdio: 'pipe', timeout: 60_000 }
+      );
+    } catch {
+      // leave missing; later checks will record structured failure
+    }
+  }
+
   const manifest = readJson('test/fixtures/corpus-manifest.json') as {
     profile: string;
     cases: Array<{ id: string }>;

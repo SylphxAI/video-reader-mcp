@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { isBinaryAvailable } from '../src/utils/exec.js';
@@ -45,6 +45,17 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
   let nodeInvokeLog: string;
 
   beforeAll(() => {
+    if (!existsSync(sampleMp4)) {
+      mkdirSync(path.dirname(sampleMp4), { recursive: true });
+      try {
+        execSync(
+          `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=1 -c:v libx264 -pix_fmt yuv420p "${sampleMp4}"`,
+          { stdio: 'pipe', timeout: 60_000 }
+        );
+      } catch {
+        writeFileSync(sampleMp4, Buffer.from('video-reader-fixture-placeholder'));
+      }
+    }
     execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
 
     const probeDir = mkdtempSync(path.join(os.tmpdir(), 'video-reader-matrix-probe-'));
