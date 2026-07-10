@@ -46,7 +46,9 @@ export const readVideoArgsSchema = z.object({
     .min(1)
     .max(64)
     .optional()
-    .describe('Maximum number of keyframe locators to return when include_keyframes is true. Defaults to 8.'),
+    .describe(
+      'Maximum number of keyframe locators to return when include_keyframes is true. Defaults to 8.'
+    ),
   include_keyframe_images: z
     .boolean()
     .optional()

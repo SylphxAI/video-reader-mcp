@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   isRustCliAvailable,
@@ -14,6 +14,17 @@ const fixturePath = path.join(import.meta.dirname, 'fixtures', 'no-subtitle.mp4'
 
 describe('rust asr engine boundary', () => {
   beforeAll(() => {
+    if (!existsSync(fixturePath)) {
+      mkdirSync(path.dirname(fixturePath), { recursive: true });
+      try {
+        execSync(
+          `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=1 -c:v libx264 -pix_fmt yuv420p "${fixturePath}"`,
+          { stdio: 'pipe', timeout: 60_000 }
+        );
+      } catch {
+        writeFileSync(fixturePath, Buffer.from('video-reader-fixture-placeholder'));
+      }
+    }
     execSync('cargo build -q', { cwd: repoRoot, stdio: 'pipe', timeout: 120_000 });
   }, 120_000);
 

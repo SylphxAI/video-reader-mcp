@@ -1,7 +1,4 @@
-import {
-  extractKeyframesViaRustEngine,
-  shouldUseRustFramesEngine,
-} from '../engine/rust-frames.js';
+import { extractKeyframesViaRustEngine, shouldUseRustFramesEngine } from '../engine/rust-frames.js';
 import type { FrameEvidence } from '../types/timeline.js';
 import { execBinary, isBinaryAvailable } from './exec.js';
 
@@ -9,9 +6,9 @@ const KEYFRAME_PTS_TIME_RE = /pts_time:([0-9.]+)/g;
 
 export const parseKeyframeFilterOutput = (stderr: string): FrameEvidence[] => {
   const keyframes: FrameEvidence[] = [];
-  let match: RegExpExecArray | null;
+  let match: RegExpExecArray | null = KEYFRAME_PTS_TIME_RE.exec(stderr);
 
-  while ((match = KEYFRAME_PTS_TIME_RE.exec(stderr)) !== null) {
+  while (match !== null) {
     const seconds = Number.parseFloat(match[1]);
     if (!Number.isFinite(seconds)) continue;
 
@@ -23,6 +20,7 @@ export const parseKeyframeFilterOutput = (stderr: string): FrameEvidence[] => {
         pict_type: 'I',
       },
     });
+    match = KEYFRAME_PTS_TIME_RE.exec(stderr);
   }
 
   return keyframes;
