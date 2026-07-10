@@ -9,7 +9,6 @@ import type { ReadVideoArgs } from '../schemas/readVideo.js';
 import type { TimelineDocument, VideoSourceResult } from '../types/timeline.js';
 import { tryAsrTranscript } from '../utils/asr.js';
 import { extractSubtitles } from '../utils/ffmpeg.js';
-import { extractKeyframes } from '../utils/frames.js';
 import {
   collectProbeWarnings,
   findSubtitleStreams,
@@ -18,6 +17,7 @@ import {
   runFfprobe,
   secondsToMs,
 } from '../utils/ffprobe.js';
+import { extractKeyframes } from '../utils/frames.js';
 import { resolvePath } from '../utils/pathUtils.js';
 import { detectScenes } from '../utils/scenes.js';
 
