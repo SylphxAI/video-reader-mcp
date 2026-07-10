@@ -115,23 +115,19 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
   });
 
   it('video_evidence rejects ocr_frame on the default Rust route', () => {
-    const probe = spawnSync(
-      rustCliBin,
-      [],
-      {
-        cwd: repoRoot,
-        encoding: 'utf8',
-        env: fakeNodeEnv,
-        input: JSON.stringify({
-          tool: 'video_evidence',
-          input: {
-            operation: 'ocr_frame',
-            sources: [{ path: sampleMp4, time_ms: 0 }],
-          },
-        }),
-        timeout: 30_000,
-      }
-    );
+    const probe = spawnSync(rustCliBin, [], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      env: fakeNodeEnv,
+      input: JSON.stringify({
+        tool: 'video_evidence',
+        input: {
+          operation: 'ocr_frame',
+          sources: [{ path: sampleMp4, time_ms: 0 }],
+        },
+      }),
+      timeout: 30_000,
+    });
     expect(probe.status).toBe(0);
     const envelope = JSON.parse(probe.stdout) as CliEnvelope;
     expect(envelope.status).toBe('error');

@@ -88,7 +88,8 @@ function invokeRustFrameTool(
     return {
       ok: false,
       code: 'ENGINE_FAILED',
-      message: response.stderr || `Rust video evidence engine exited with status ${response.status}`,
+      message:
+        response.stderr || `Rust video evidence engine exited with status ${response.status}`,
     };
   }
 

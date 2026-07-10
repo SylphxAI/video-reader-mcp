@@ -1,9 +1,9 @@
-import { text, tool, toolError } from '../mcp.js';
 import {
   cropFrameViaRustEngine,
   renderFrameViaRustEngine,
   shouldUseRustVideoEvidenceEngine,
 } from '../engine/rust-video-evidence.js';
+import { text, tool, toolError } from '../mcp.js';
 import { type VideoEvidenceArgs, videoEvidenceArgsSchema } from '../schemas/videoEvidence.js';
 import { resolvePath } from '../utils/pathUtils.js';
 

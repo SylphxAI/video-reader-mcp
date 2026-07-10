@@ -77,16 +77,20 @@ describe('rust frames engine boundary', () => {
       return;
     }
 
-    const document = await buildTimelineDocument(fixturePath, {
-      sources: [{ path: fixturePath }],
-      include_scenes: false,
-      include_subtitles: false,
-      include_transcript: false,
-      include_keyframes: true,
-      include_keyframe_images: true,
-      keyframe_limit: 2,
-      keyframe_max_dimension: 120,
-    }, '0.1.0');
+    const document = await buildTimelineDocument(
+      fixturePath,
+      {
+        sources: [{ path: fixturePath }],
+        include_scenes: false,
+        include_subtitles: false,
+        include_transcript: false,
+        include_keyframes: true,
+        include_keyframe_images: true,
+        keyframe_limit: 2,
+        keyframe_max_dimension: 120,
+      },
+      '0.1.0'
+    );
 
     expect(document.keyframes.length).toBeGreaterThan(0);
     expect(document.keyframes[0]?.route).toBe('rust-keyframe-png');
