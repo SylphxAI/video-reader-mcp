@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "repo": "SylphxAI/video-reader-mcp",
   "repoLedgerPath": "docs/specs/migration-ledger.json",
-  "lockedAt": "2026-07-10T21:30:00Z",
+  "lockedAt": "2026-07-11T13:30:00Z",
   "programSpec": {
     "id": "rust-first-fleet-migration",
     "controlPlaneRepo": "SylphxAI/rust-first-fleet-control-plane",
@@ -12,17 +12,18 @@
   },
   "adrRefs": [
     {
-      "path": "docs/adr/ADR-PROPOSED-fleet-video-reader-mcp-rust-north-star.md",
-      "status": "proposed",
-      "note": "North Star ADR on disk \u2014 pending ADR PR; ADR number will equal introducing PR number per Doctrine"
+      "path": "docs/adr/ADR-3-mcp-family-sota-roadmap.md",
+      "status": "accepted",
+      "note": "Family roadmap present on main. Fleet-scoped video-reader North Star ADR file (ADR-N-fleet-video-reader-mcp-rust-north-star.md) is NOT on main — prior PR #11 title claimed ADR but only landed a contaminated ledger."
     }
   ],
-  "reauditRef": "rej-010",
-  "verificationRef": "verification/video-reader-cycle64-read-pdf-rust-impl.json",
+  "reauditRef": "VIDEO-READER-MCP-CONTAMINATION-TICK024",
+  "verificationRef": "audits/denominator-contamination-SylphxAI__video-reader-mcp-2026-07-11-tick024.json",
   "inventorySource": [
     "mcp-tools",
     "manual"
   ],
+  "inventoryNotes": "TICK024 decontamination: ledger rebuilt from origin/main source (src/index.ts tools map + crates/video-reader-mcp-server tool_router + bin/video-reader-mcp). Prior ledger was a mechanical rename of SylphxAI/pdf-reader-mcp and claimed tool/read_pdf|search_pdf|pdf_evidence paths that do not exist in this repo. Fail-closed: no parity_proven, no authority_rust, no ts_deleted, no promotions.",
   "inScopeBoundary": {
     "includeGlobs": [
       "src/**",
@@ -30,11 +31,12 @@
       "crates/video-reader-cli/**",
       "crates/video-reader-mcp-server/**",
       "bin/**",
-      "corpus/**"
+      "test/**"
     ],
     "excludeGlobs": [
       "node_modules/**",
       "dist/**",
+      "target/**",
       "benchmark-artifacts/**"
     ]
   },
@@ -43,23 +45,11 @@
       "id": "transport/web-mcp-http",
       "domain": "transport",
       "weight": 5,
-      "state": "rust_impl",
-      "proof": {
-        "status": "stale",
-        "staleReason": "rej-010 retroactive audit \u2014 no SHA-bound differential proof",
-        "staleAt": "2026-07-10T21:30:00Z"
-      },
-      "promotionHold": {
-        "active": true,
-        "reason": "rej-010 promotion freeze",
-        "rejectionRef": "rej-010",
-        "since": "2026-07-10T21:30:00Z"
-      },
-      "rustSurface": "crates/video-reader-mcp-server/src/http_transport.rs (rmcp StreamableHttpService)",
-      "parityTest": "test/httpTransport.matrix.test.ts; test/integration/http-transport.test.ts; test/check-no-ts-http-backend.test.ts; test/fixtures/read-pdf-golden.json; cargo test -p video-reader-mcp-server",
-      "prodProbe": "benchmark:release-gate \u2192 mcp:rust_web_http_transport; mcp:http_transport_parity; mcp:http_authority_rust",
-      "prUrl": "https://github.com/SylphxAI/video-reader-mcp/pull/396",
-      "notes": "S2: MCP_TRANSPORT=http routes exclusively to Rust rmcp before TS stdio opt-in; check-no-ts-http-backend gate blocks parallel TS Streamable HTTP. HTTP slice out of scope for v1 differential harness."
+      "state": "ts_only",
+      "tsSurface": "src/index.ts (MCP_TRANSPORT=http → src/mcp.ts http transport)",
+      "parityTest": "test/shippedPath.matrix.test.ts; bun run benchmark:release-gate",
+      "prodProbe": "MCP_TRANSPORT=http npx @sylphx/video-reader-mcp (TS path on main)",
+      "notes": "On origin/main (6efac6e) Rust mcp-server main.rs is stdio-only; crates/video-reader-mcp-server/src/http_transport.rs is ABSENT. Open PR #10 (feat/rust-web-mcp-http-transport) adds Rust Streamable HTTP — not merged; do not claim rust_impl until merge + proof. Fail-closed ts_only."
     },
     {
       "id": "transport/stdio-rust-rmcp",
@@ -69,26 +59,23 @@
       "proof": {
         "status": "missing",
         "dependencyGlobs": [
-          "scripts/differential/**",
-          "scripts/run-video-reader-differential.sh",
-          "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-          "test/fixtures/read-pdf-golden.json",
-          "test/integration/stdio-transport.test.ts"
+          "bin/video-reader-mcp",
+          "bin/native/video-reader-mcp-server",
+          "crates/video-reader-mcp-server/src/main.rs",
+          "crates/video-reader-mcp-server/src/lib.rs"
         ],
-        "staleReason": "rej-010: differential harness landed \u2014 awaiting differential_green at bound SHAs",
-        "verificationRef": "verification/video-reader-2026-07-10T2130-read-pdf-stdio-differential.json"
+        "staleReason": "TICK024: Rust stdio rmcp present on main and is default bin path, but no SHA-bound differential harness on main (scripts/run-video-reader-differential.sh ABSENT). proof.status missing — NO promotion."
       },
       "promotionHold": {
         "active": true,
-        "reason": "rej-010: differential harness landed \u2014 awaiting differential_green at bound SHAs; NO auto-promotion",
+        "reason": "rej-010 + TICK024 decontamination — rust_impl on disk only; differential_green required before parity_proven/authority_rust",
         "rejectionRef": "rej-010",
-        "since": "2026-07-10T21:30:00Z"
+        "since": "2026-07-11T13:30:00Z"
       },
       "rustSurface": "crates/video-reader-mcp-server/src/main.rs (rmcp::transport::stdio())",
-      "parityTest": "test/stdioTransport.matrix.test.ts; test/integration/stdio-transport.test.ts; test/check-no-ts-stdio-backend.test.ts; test/fixtures/read-pdf-golden.json; cargo test -p video-reader-mcp-server",
-      "differentialTest": "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs#video_reader_mcp_differential_matches_ts_oracle; scripts/run-video-reader-differential.sh",
-      "prodProbe": "benchmark:release-gate \u2192 mcp:rust_adapter_default; mcp:stdio_transport_parity; mcp:stdio_deletion_prep_gate",
-      "notes": "S3: default npm bin launches Rust rmcp stdio; rej-010 SHA-bound differential harness at scripts/run-video-reader-differential.sh. parity_proven NOT restored until differential_green + prod smoke."
+      "parityTest": "test/shippedPath.matrix.test.ts; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate; bin/video-reader-mcp default (Rust when native staged)",
+      "notes": "bin/video-reader-mcp defaults to Rust native video-reader-mcp-server; VIDEO_READER_MCP_TRANSPORT=ts opts into TS. SHA-bound differential harness not on main."
     },
     {
       "id": "transport/stdio-ts-adapter",
@@ -96,333 +83,138 @@
       "weight": 4,
       "state": "ts_only",
       "tsSurface": "src/index.ts",
-      "parityTest": "scripts/check-ts-adapter-deletion-ready.sh; scripts/check-no-ts-stdio-backend.sh; test/tsAdapterDeletion.matrix.test.ts",
-      "notes": "Opt-in TS stdio MCP adapter (VIDEO_READER_MCP_TRANSPORT=ts env). Deletion slice ready when check:ts-adapter-deletion passes. ts_deleted NOT claimed (rej-001) \u2014 pending deletion PR merge + prod smoke."
+      "parityTest": "test/shippedPath.matrix.test.ts",
+      "notes": "Opt-in TS stdio MCP adapter via VIDEO_READER_MCP_TRANSPORT=ts (or bin arg ts). Deletion gates/scripts (check-ts-adapter-deletion-ready.sh, check-no-ts-stdio-backend.sh) ABSENT on main. ts_deleted NOT claimed (rej-001)."
     },
     {
-      "id": "tool/read_pdf",
+      "id": "tool/read_video",
       "domain": "mcp-tools",
       "weight": 5,
       "state": "rust_impl",
       "proof": {
         "status": "missing",
         "dependencyGlobs": [
-          "test/fixtures/read-pdf-golden.json",
-          "scripts/differential/**",
-          "scripts/run-video-reader-differential.sh",
-          "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-          "crates/video-reader-core/tests/read_pdf_golden_parity.rs",
-          "crates/video-reader-mcp-server/tests/read_pdf_golden_parity.rs"
+          "src/handlers/readVideo.ts",
+          "crates/video-reader-mcp-server/src/read_video.rs",
+          "crates/video-reader-core/src/read_video.rs",
+          "test/readVideo.integration.test.ts",
+          "test/shippedPath.matrix.test.ts"
         ],
-        "staleReason": "rej-010: differential harness landed \u2014 awaiting differential_green at bound SHAs",
-        "verificationRef": "verification/video-reader-2026-07-10T2130-read-pdf-stdio-differential.json"
+        "staleReason": "TICK024: source-derived inventory — Rust + TS handlers present; no SHA-bound differential_green on main. NO promotion."
       },
       "promotionHold": {
         "active": true,
-        "reason": "rej-010: differential harness landed \u2014 awaiting differential_green at bound SHAs; NO auto-promotion",
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion",
         "rejectionRef": "rej-010",
-        "since": "2026-07-10T21:30:00Z"
+        "since": "2026-07-11T13:30:00Z"
       },
-      "tsSurface": "src/handlers/readPdf.ts",
-      "rustSurface": "crates/video-reader-mcp-server/src/read_pdf.rs",
-      "parityTest": "test/fixtures/read-pdf-golden.json; crates/video-reader-core/tests/read_pdf_golden_parity.rs; crates/video-reader-mcp-server/tests/read_pdf_golden_parity.rs; test/readPdf.parity.test.ts; test/integration/http-transport.test.ts; test/integration/stdio-transport.test.ts",
-      "differentialTest": "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs#video_reader_mcp_differential_matches_ts_oracle; scripts/run-video-reader-differential.sh",
-      "prodProbe": "benchmark:release-gate \u2192 mcp:read_pdf_golden_parity; mcp:rmcp_read_pdf_parity; mcp:read_pdf_cross_parity",
-      "notes": "Golden fixture parity proven across Rust core, CLI, rmcp handler. rej-010: SHA-bound differential harness (frozen golden via video-reader-cli oracle vs rmcp stdio tools/call). parity_proven NOT restored until differential_green."
+      "tsSurface": "src/handlers/readVideo.ts",
+      "rustSurface": "crates/video-reader-mcp-server/src/read_video.rs",
+      "parityTest": "test/readVideo.integration.test.ts; test/shippedPath.matrix.test.ts; test/rustTimeline.boundary.test.ts; cargo test -p video-reader-core; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate → read_video shipped path",
+      "notes": "Primary MCP tool. Registered in src/index.ts tools map and rmcp #[tool] router. Engine route rust-read-video-v1 via video-reader-core when ffprobe available. Replaces contaminated tool/read_pdf claim."
     },
     {
-      "id": "tool/search_pdf",
+      "id": "tool/video_evidence",
       "domain": "mcp-tools",
       "weight": 5,
       "state": "rust_impl",
       "proof": {
         "status": "missing",
         "dependencyGlobs": [
-          "crates/video-reader-mcp-server/src/search.rs",
-          "crates/video-reader-mcp-server/src/tool_routes.rs",
-          "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-          "scripts/run-video-reader-differential.sh"
+          "src/handlers/videoEvidence.ts",
+          "crates/video-reader-mcp-server/src/video_evidence.rs",
+          "crates/video-reader-core/src/video_evidence.rs",
+          "src/engine/rust-video-evidence.ts",
+          "test/videoEvidence.boundary.test.ts"
         ],
-        "staleReason": "rej-010: toolRouteContract slice landed \u2014 awaiting differential_green at bound SHAs",
-        "verificationRef": "scripts/run-video-reader-differential.sh"
+        "staleReason": "TICK024: source-derived inventory — Rust + TS handlers present; no SHA-bound differential_green on main. NO promotion."
       },
       "promotionHold": {
         "active": true,
-        "reason": "rej-010: toolRouteContract slice landed \u2014 awaiting differential_green at bound SHAs; NO auto-promotion",
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion",
         "rejectionRef": "rej-010",
-        "since": "2026-07-10T21:30:00Z"
+        "since": "2026-07-11T13:30:00Z"
       },
-      "tsSurface": "src/handlers/searchPdf.ts",
-      "rustSurface": "crates/video-reader-mcp-server/src/search.rs",
-      "parityTest": "test/shippedPath.matrix.test.ts; test/integration/stdio-transport.test.ts; benchmark-artifacts/pdf_sota_release_gate.json",
-      "differentialTest": "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs#video_reader_mcp_differential_matches_ts_oracle; scripts/run-video-reader-differential.sh",
-      "prodProbe": "benchmark:release-gate \u2192 mcp:stdio_transport_parity; boundary:rust_cli_engine",
-      "notes": "S4: rmcp stdio routes search_pdf through rust-text-index. cycle43: stdioProbe.searchPdf live differential probe landed. proof.status missing until differential_green."
-    },
-    {
-      "id": "tool/pdf_evidence",
-      "domain": "mcp-tools",
-      "weight": 5,
-      "state": "rust_impl",
-      "proof": {
-        "status": "missing",
-        "dependencyGlobs": [
-          "crates/video-reader-mcp-server/src/pdf_evidence.rs",
-          "crates/video-reader-mcp-server/src/tool_routes.rs",
-          "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-          "scripts/run-video-reader-differential.sh"
-        ],
-        "staleReason": "rej-010: toolRouteContract slice landed \u2014 awaiting differential_green at bound SHAs",
-        "verificationRef": "scripts/run-video-reader-differential.sh"
-      },
-      "promotionHold": {
-        "active": true,
-        "reason": "rej-010: toolRouteContract slice landed \u2014 awaiting differential_green at bound SHAs; NO auto-promotion",
-        "rejectionRef": "rej-010",
-        "since": "2026-07-10T21:30:00Z"
-      },
-      "tsSurface": "src/handlers/pdfEvidence.ts",
-      "rustSurface": "crates/video-reader-mcp-server/src/pdf_evidence.rs",
-      "parityTest": "test/shippedPath.matrix.test.ts; test/integration/stdio-transport.test.ts; benchmark-artifacts/pdf_sota_release_gate.json",
-      "differentialTest": "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs#video_reader_mcp_differential_matches_ts_oracle; scripts/run-video-reader-differential.sh",
-      "prodProbe": "benchmark:release-gate \u2192 mcp:stdio_transport_parity; boundary:rust_cli_engine",
-      "notes": "S4: rmcp stdio routes pdf_evidence inspect through rust-pdf-inspect-v1. cycle43: stdioProbe.pdfEvidence live differential probe landed. proof.status missing until differential_green."
+      "tsSurface": "src/handlers/videoEvidence.ts",
+      "rustSurface": "crates/video-reader-mcp-server/src/video_evidence.rs",
+      "parityTest": "test/videoEvidence.boundary.test.ts; test/frames.boundary.test.ts; cargo test -p video-reader-core; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate → video_evidence render_frame/crop_frame",
+      "notes": "Follow-up MCP tool (render_frame, crop_frame; ocr_frame unavailable). Registered in src/index.ts and rmcp router. Replaces contaminated tool/search_pdf + tool/pdf_evidence claims (wrong domain; no search_pdf surface in this product)."
     }
   ],
   "summary": {
-    "total": 6,
-    "ts_only": 1,
+    "total": 5,
+    "ts_only": 2,
     "contracted": 0,
-    "rust_impl": 5,
+    "rust_impl": 3,
     "parity_proven": 0,
     "authority_rust": 0,
     "ts_deleted": 0,
-    "proof_missing": 5,
+    "proof_missing": 3,
     "completion_progress": 0.0,
     "authority_progress": 0.0,
-    "weighted_progress": 0.46,
-    "cycle49_delta": {
-      "rust_impl_verified": 1,
-      "slice": "tool.search_pdf|tool.pdf_evidence",
-      "verificationRef": "verification/video-reader-cycle49-tool-route-contract-rust-impl.json",
-      "notes": "rej-010 rust_impl ONLY \u2014 cycle49 highest-value unimplemented slice: toolRouteContract + stdioProbe search/evidence bounded differential"
-    },
-    "cycle50_delta": {
-      "rust_impl_verified": 1,
-      "slice": "tool.read_pdf",
-      "verificationRef": "verification/video-reader-cycle50-read-pdf-rust-impl.json",
-      "notes": "rej-010 rust_impl ONLY \u2014 cycle50 next highest-value slice: tool.read_pdf bounded differential (6 golden cases)"
-    },
-    "cycle62_delta": {
-      "rust_impl_verified": 1,
-      "slice": "transport.stdio-rust-rmcp",
-      "verificationRef": "verification/video-reader-cycle62-stdio-transport-rust-impl.json",
-      "notes": "rej-010 rust_impl ONLY \u2014 cycle62 next bounded slice: transport.stdio-rust-rmcp stdioProbe differential (4 cases)"
-    },
-    "cycle63_delta": {
-      "rust_impl_verified": 1,
-      "slice": "tool.search_pdf",
-      "verificationRef": "verification/video-reader-cycle63-search-pdf-rust-impl.json",
-      "notes": "rej-010 rust_impl ONLY \u2014 cycle63 harness metadata: tool.search_pdf bounded differential (3 cases)"
-    },
-    "cycle64_delta": {
-      "rust_impl_verified": 1,
-      "slice": "tool.read_pdf",
-      "verificationRef": "verification/video-reader-cycle64-read-pdf-rust-impl.json",
-      "notes": "rej-010 rust_impl ONLY \u2014 cycle64 harness metadata: tool.read_pdf bounded differential re-verify (4 cases)"
+    "weighted_progress": 0.413,
+    "decontamination": {
+      "packetId": "VIDEO-READER-MCP-CONTAMINATION-TICK024",
+      "removedForeignCapabilityIds": [
+        "tool/read_pdf",
+        "tool/search_pdf",
+        "tool/pdf_evidence"
+      ],
+      "addedSourceDerivedCapabilityIds": [
+        "tool/read_video",
+        "tool/video_evidence"
+      ],
+      "priorTotal": 6,
+      "newTotal": 5,
+      "notes": "Denominator drop 6→5 is intentional contamination remediation (pdf-domain tools never existed here). Control-plane sealed baseline must re-seal after product merge — not a silent regression."
     }
   },
   "promotionFreeze": {
     "active": true,
-    "reason": "rej-010 promotion freeze \u2014 0 capabilities with differential_green or canary_green proof",
+    "reason": "TICK024 decontamination + rej-010 — 0 capabilities with differential_green or canary_green; no promotions",
     "rejectionRef": "rej-010",
-    "since": "2026-07-10T21:30:00Z"
+    "since": "2026-07-11T13:30:00Z"
   },
   "postMergeGate": {
-    "deletionReadyScript": "scripts/check-ts-adapter-deletion-ready.sh",
-    "retirementGateScript": "scripts/check-no-ts-stdio-backend.sh",
     "prodSmokeScript": "bun run benchmark:release-gate",
-    "verificationArtifact": "benchmark-artifacts/pdf_sota_release_gate.json",
-    "differentialHarness": "scripts/run-video-reader-differential.sh",
-    "capabilitiesAfterMerge": [
-      "transport/stdio-ts-adapter"
-    ],
-    "notes": "ts_deleted flip for transport/stdio-ts-adapter blocked until deletion PR merge + release-gate transcript (rej-001). differential_green required before parity_proven/authority_rust restore (rej-010)."
+    "notes": "ts_deleted for transport/stdio-ts-adapter blocked until deletion PR + prod smoke (rej-001). Rust HTTP authority blocked until PR #10 merge + differential proof. differential_green required before parity_proven/authority_rust (rej-010)."
   },
   "slices": {
-    "S2": {
-      "status": "shipped",
+    "S1-tools": {
+      "status": "shipped_rust_impl_unproven",
       "evidence": [
-        "scripts/check-no-ts-http-backend.sh",
-        "test/check-no-ts-http-backend.test.ts",
-        "test/integration/http-transport.test.ts",
-        "crates/video-reader-mcp-server/src/http_transport.rs",
-        "bin/video-reader-mcp"
-      ],
-      "notes": "transport/web-mcp-http rust_impl on disk. HTTP differential harness pending separate slice."
-    },
-    "S3": {
-      "status": "shipped",
-      "evidence": [
-        "scripts/check-no-ts-stdio-backend.sh",
-        "test/check-no-ts-stdio-backend.test.ts",
-        "test/stdioTransport.matrix.test.ts",
-        "test/integration/stdio-transport.test.ts",
-        "test/tsAdapterDeletion.matrix.test.ts",
-        "scripts/check-ts-adapter-deletion-ready.sh",
-        "scripts/run-video-reader-differential.sh",
-        "scripts/differential/video-reader-mcp-oracle.ts",
-        "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-        "bin/video-reader-mcp",
-        "crates/video-reader-mcp-server/src/main.rs"
-      ],
-      "notes": "rej-010: read_pdf + stdio differential harness landed. cycle37: read_pdf golden fixtures (test/fixtures/read-pdf-golden.json) + stdioProbe differential verified on disk. ts_deleted NOT claimed (rej-001) \u2014 deletion PR + prod smoke pending. NO promotions."
-    },
-    "S4": {
-      "status": "shipped",
-      "evidence": [
-        "crates/video-reader-mcp-server/src/search.rs",
-        "crates/video-reader-mcp-server/src/pdf_evidence.rs",
+        "src/handlers/readVideo.ts",
+        "src/handlers/videoEvidence.ts",
+        "src/index.ts",
+        "crates/video-reader-mcp-server/src/read_video.rs",
+        "crates/video-reader-mcp-server/src/video_evidence.rs",
         "crates/video-reader-mcp-server/src/tool_routes.rs",
-        "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-        "scripts/differential/video-reader-mcp-oracle.ts",
-        "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-        "scripts/run-video-reader-differential.sh",
-        "docs/specs/video-reader-mcp-parity-slice.json",
-        "test/differentialHarness.matrix.test.ts"
+        "crates/video-reader-core/src/read_video.rs",
+        "crates/video-reader-core/src/video_evidence.rs",
+        "test/readVideo.integration.test.ts",
+        "test/videoEvidence.boundary.test.ts",
+        "test/shippedPath.matrix.test.ts"
       ],
-      "notes": "cycle39 rej-010: tool.search_pdf|tool.pdf_evidence rust_impl toolRouteContract slice in differential harness. proof.status missing until differential_green."
+      "notes": "tool/read_video + tool/video_evidence rust_impl on main. No differential harness on main."
+    },
+    "S2-stdio-rust-default": {
+      "status": "shipped_rust_impl_unproven",
+      "evidence": [
+        "bin/video-reader-mcp",
+        "bin/native/video-reader-mcp-server",
+        "crates/video-reader-mcp-server/src/main.rs",
+        "crates/video-reader-mcp-server/src/lib.rs"
+      ],
+      "notes": "Default bin launches Rust rmcp stdio when native present; TS opt-in via VIDEO_READER_MCP_TRANSPORT=ts."
+    },
+    "S3-http-rust": {
+      "status": "not_on_main",
+      "evidence": [
+        "https://github.com/SylphxAI/video-reader-mcp/pull/10"
+      ],
+      "notes": "Rust HTTP transport only on open PR #10. Main TS HTTP remains ts_only."
     }
-  },
-  "cycle37": {
-    "boundedSlice": "tool.read_pdf|transport.stdio-rust-rmcp",
-    "status": "harness_landed_disk",
-    "evidenceRef": "/tmp/grok-goal-729a939ec6e2/implementer/cycle37-rust-impl/mcp-batch.json"
-  },
-  "cycle39": {
-    "boundedSlice": "tool.search_pdf|tool.pdf_evidence",
-    "status": "harness_landed_disk",
-    "evidenceRef": "/tmp/grok-goal-729a939ec6e2/implementer/cycle39-mcp-wave2.json",
-    "deliverables": [
-      "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-      "docs/specs/video-reader-mcp-parity-slice.json",
-      "test/differentialHarness.matrix.test.ts",
-      "scripts/run-video-reader-differential.sh"
-    ],
-    "notes": "cycle39 rej-010: search_pdf + pdf_evidence toolRouteContract rust_impl slice advanced. proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle43": {
-    "boundedSlice": "tool.search_pdf|tool.pdf_evidence",
-    "status": "harness_landed_disk",
-    "deliverables": [
-      "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-      "scripts/differential/video-reader-mcp-oracle.ts",
-      "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-      "docs/specs/video-reader-mcp-parity-slice.json",
-      "test/differentialHarness.matrix.test.ts"
-    ],
-    "notes": "cycle43 rej-010: search_pdf + pdf_evidence stdioProbe live differential probes. rust_impl only \u2014 proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle45": {
-    "boundedSlice": "tool.read_pdf|tool.search_pdf|tool.pdf_evidence|transport.stdio-rust-rmcp",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "evidenceRef": "/tmp/grok-goal-729a939ec6e2/implementer/cycle45-mcp-reader-batch.json",
-    "deliverables": [
-      "docs/specs/video-reader-mcp-parity-slice.json",
-      "test/differentialHarness.matrix.test.ts",
-      "scripts/run-video-reader-differential.sh",
-      "scripts/differential/video-reader-mcp-oracle.ts",
-      "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-      "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-      "scripts/check-no-ts-stdio-backend.sh"
-    ],
-    "harnessPath": "scripts/run-video-reader-differential.sh",
-    "notes": "cycle45 rej-010: read_pdf + search_pdf + pdf_evidence + stdio transport rust_impl differential harness re-verified on disk. proof.status missing until differential_green at bound SHAs \u2014 NO promotion."
-  },
-  "cycle45Slice": "tool.read_pdf|tool.search_pdf|tool.pdf_evidence|transport.stdio-rust-rmcp \u2014 cycle45 MCP reader batch re-verify; bash scripts/run-video-reader-differential.sh",
-  "cycle49Slice": "tool.search_pdf|tool.pdf_evidence \u2014 bounded --slice entrypoint; bash scripts/run-video-reader-differential.sh --slice tool.search_pdf|tool.pdf_evidence",
-  "cycle50Slice": "tool.read_pdf \u2014 bounded --slice entrypoint; bash scripts/run-video-reader-differential.sh --slice tool.read_pdf",
-  "cycle62Slice": "transport.stdio-rust-rmcp \u2014 bounded --slice entrypoint; bash scripts/run-video-reader-differential.sh --slice transport.stdio-rust-rmcp; proof.status missing; authority_rust blocked per rej-010",
-  "cycle49": {
-    "boundedSlice": "tool.search_pdf|tool.pdf_evidence",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "verificationRef": "verification/video-reader-cycle49-tool-route-contract-rust-impl.json",
-    "deliverables": [
-      "scripts/run-video-reader-differential.sh",
-      "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-      "scripts/differential/video-reader-mcp-oracle.ts",
-      "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-      "docs/specs/video-reader-mcp-parity-slice.json",
-      "test/differentialHarness.matrix.test.ts"
-    ],
-    "harnessPath": "scripts/run-video-reader-differential.sh --slice tool.search_pdf|tool.pdf_evidence",
-    "caseCounts": {
-      "toolRouteContract": 3,
-      "stdioProbeSearchEvidence": 2
-    },
-    "notes": "cycle49 rej-010: tool.search_pdf|tool.pdf_evidence bounded differential harness on-disk verify. rust_impl ONLY \u2014 proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle50": {
-    "boundedSlice": "tool.read_pdf",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "verificationRef": "verification/video-reader-cycle50-read-pdf-rust-impl.json",
-    "harnessPath": "scripts/run-video-reader-differential.sh --slice tool.read_pdf",
-    "deliverables": [
-      "scripts/run-video-reader-differential.sh",
-      "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-      "scripts/differential/video-reader-mcp-oracle.ts",
-      "scripts/differential/fixtures/video-reader-mcp-corpus.json",
-      "docs/specs/video-reader-mcp-parity-slice.json",
-      "test/differentialHarness.matrix.test.ts",
-      "test/fixtures/read-pdf-golden.json"
-    ],
-    "caseCounts": {
-      "readPdfTool": 6
-    },
-    "notes": "cycle50 rej-010: tool.read_pdf bounded differential harness on-disk verify. rust_impl ONLY \u2014 proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle62": {
-    "boundedSlice": "transport.stdio-rust-rmcp",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "verificationRef": "verification/video-reader-cycle62-stdio-transport-rust-impl.json",
-    "harnessPath": "scripts/run-video-reader-differential.sh --slice transport.stdio-rust-rmcp",
-    "deliverables": [
-      "scripts/run-video-reader-differential.sh",
-      "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs",
-      "scripts/differential/video-reader-mcp-oracle.ts",
-      "scripts/check-no-ts-stdio-backend.sh"
-    ],
-    "caseCounts": {
-      "stdioProbe": 4
-    },
-    "notes": "cycle62 rej-010: transport.stdio-rust-rmcp bounded differential harness on-disk verify. rust_impl ONLY \u2014 proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle63Slice": "tool.search_pdf \u2014 bounded --slice entrypoint; bash scripts/run-video-reader-differential.sh --slice tool.search_pdf",
-  "cycle64Slice": "tool.read_pdf \u2014 bounded --slice entrypoint; bash scripts/run-video-reader-differential.sh --slice tool.read_pdf; proof.status missing; authority_rust blocked per rej-010",
-  "cycle63": {
-    "boundedSlice": "tool.search_pdf",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "verificationRef": "verification/video-reader-cycle63-search-pdf-rust-impl.json",
-    "harnessPath": "scripts/run-video-reader-differential.sh --slice tool.search_pdf",
-    "caseCounts": {
-      "searchPdfTool": 3
-    },
-    "notes": "cycle63 rej-010: tool.search_pdf bounded differential harness on-disk verify. rust_impl ONLY \u2014 proof.status missing until differential_green at bound SHAs."
-  },
-  "cycle64": {
-    "boundedSlice": "tool.read_pdf",
-    "status": "rust_impl_on_disk_verified",
-    "reauditRef": "rej-010",
-    "verificationRef": "verification/video-reader-cycle64-read-pdf-rust-impl.json",
-    "harnessPath": "scripts/run-video-reader-differential.sh --slice tool.read_pdf",
-    "caseCounts": {
-      "readPdf": 4
-    },
-    "notes": "cycle64 rej-010: tool.read_pdf bounded differential harness on-disk verify. rust_impl ONLY \u2014 proof.status missing until differential_green at bound SHAs."
   }
 }
