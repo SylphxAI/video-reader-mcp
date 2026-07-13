@@ -177,4 +177,27 @@ mod tests {
         assert_eq!(default_keyframe_limit(), 8);
         assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
     }
+
+
+    #[test]
+    fn bulk_default_option_helpers_and_key_diff_on_threshold() {
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!(default_true());
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+        let mut a = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let b = a.clone();
+        a.scene_threshold = 0.5;
+        assert_ne!(build_cache_key("h", &a), build_cache_key("h", &b));
+    }
 }

@@ -488,4 +488,34 @@ mod tests {
         assert!(!w.iter().any(|x| x.contains("Duration unavailable")), "{w:?}");
         assert!(!w.iter().any(|x| x.contains("variable frame rate")), "{w:?}");
     }
+
+
+    #[test]
+    fn bulk_parse_u64_and_seconds_to_ms_edges() {
+        use serde_json::json;
+        assert_eq!(parse_u64(Some(&json!(12))), Some(12));
+        assert_eq!(parse_u64(Some(&json!("12"))), Some(12));
+        assert_eq!(parse_u64(Some(&json!(-1))), None);
+        assert_eq!(parse_u64(None), None);
+        assert_eq!(seconds_to_ms(Some(&json!(1.5))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!("2"))), 2000);
+        assert_eq!(seconds_to_ms(None), 0);
+    }
+
+    #[test]
+    fn bulk_assemble_probe_timeline_minimal_format() {
+        use serde_json::json;
+        let ffprobe = json!({
+            "format": {"duration": "1.5", "format_name": "mov,mp4", "bit_rate": "1000"},
+            "streams": [{"index":0,"codec_type":"video","codec_name":"h264","width":640,"height":360}],
+            "chapters": []
+        });
+        let opts = AssembleOptions {
+            include_streams: true,
+            include_chapters: true,
+        };
+        let tl = assemble_probe_timeline(&ffprobe, &opts);
+        assert!(tl.format.duration_ms >= 1000, "{:?}", tl.format.duration_ms);
+        assert!(!tl.streams.is_empty());
+    }
 }

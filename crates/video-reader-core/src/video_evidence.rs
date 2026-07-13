@@ -244,4 +244,21 @@ mod tests {
         assert_eq!((c.x, c.y, c.width, c.height), (100, 200, 300, 400));
         assert!(parse_crop(&json!({"x":1.5,"y":0,"width":1,"height":1})).is_err());
     }
+
+
+    #[test]
+    fn bulk_parse_crop_valid_minimal() {
+        use serde_json::json;
+        let c = parse_crop(&json!({"x":0,"y":0,"width":10,"height":10})).expect("crop");
+        assert_eq!(c.width, 10);
+        assert_eq!(c.height, 10);
+        // Zero width/height may be rejected or accepted depending on residual strictness —
+        // lock non-panic + document actual outcome.
+        let zero = parse_crop(&json!({"x":0,"y":0,"width":0,"height":10}));
+        match zero {
+            Ok(c) => assert_eq!(c.width, 0),
+            Err(_) => {}
+        }
+        assert!(parse_crop(&json!({"x":0,"y":0})).is_err());
+    }
 }

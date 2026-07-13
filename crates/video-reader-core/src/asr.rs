@@ -518,4 +518,26 @@ mod tests {
             Err(_) => {}
         }
     }
+
+
+    #[test]
+    fn bulk_parse_timestamp_ms_mmss_and_invalid() {
+        assert!(parse_timestamp_ms("00:01:02.500").is_ok());
+        assert!(parse_timestamp_ms("00:00:01.000").is_ok());
+        assert!(parse_timestamp_ms("").is_err());
+        assert!(parse_timestamp_ms("not-time").is_err());
+        assert!(parse_timestamp_ms("01:02.500").is_err()); // needs HH:MM:SS
+    }
+
+    #[test]
+    fn bulk_parse_whisper_empty_segments_ok() {
+        // accept either empty ok or structured error — no panic
+        for payload in [
+            r#"{"transcription":[]}"#,
+            r#"{"segments":[]}"#,
+            r#"[]"#,
+        ] {
+            let _ = parse_whisper_cpp_json(payload, "whisper.cpp");
+        }
+    }
 }
