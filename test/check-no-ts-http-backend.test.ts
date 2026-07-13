@@ -34,7 +34,7 @@ describe('Web MCP HTTP Rust authority gate', () => {
   });
 
   it('migration ledger marks transport/web-mcp-http as rust_impl under rej-010 promotion freeze', () => {
-    const ledger = JSON.parse(readText('docs/specs/video-reader-mcp-migration-ledger.json')) as {
+    const ledger = JSON.parse(readText('docs/specs/migration-ledger.json')) as {
       capabilities: Array<{ id: string; state: string }>;
     };
 

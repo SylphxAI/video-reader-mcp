@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 3,
+  "repo": "SylphxAI/video-reader-mcp",
+  "repoLedgerPath": "docs/specs/migration-ledger.json",
+  "lockedAt": "2026-07-11T13:30:00Z",
+  "programSpec": {
+    "id": "rust-first-fleet-migration",
+    "controlPlaneRepo": "SylphxAI/rust-first-fleet-control-plane",
+    "programSpecPath": "PROGRAM-SPEC.json",
+    "completionStandard": "COMPLETION-STANDARD.md",
+    "parityStandard": "PARITY-VERIFICATION-STANDARD.md"
+  },
+  "adrRefs": [
+    {
+      "path": "docs/adr/ADR-3-mcp-family-sota-roadmap.md",
+      "status": "accepted",
+      "note": "Family roadmap present on main. Fleet-scoped video-reader North Star ADR file (ADR-N-fleet-video-reader-mcp-rust-north-star.md) is NOT on main — prior PR #11 title claimed ADR but only landed a contaminated ledger."
+    }
+  ],
+  "reauditRef": "VIDEO-READER-MCP-CONTAMINATION-TICK024",
+  "verificationRef": "audits/denominator-contamination-SylphxAI__video-reader-mcp-2026-07-11-tick024.json",
+  "inventorySource": [
+    "mcp-tools",
+    "manual"
+  ],
+  "inventoryNotes": "TICK024 decontamination: ledger rebuilt from origin/main source (src/index.ts tools map + crates/video-reader-mcp-server tool_router + bin/video-reader-mcp). Prior ledger was a mechanical rename of SylphxAI/pdf-reader-mcp and claimed tool/read_pdf|search_pdf|pdf_evidence paths that do not exist in this repo. Fail-closed: no parity_proven, no authority_rust, no ts_deleted, no promotions.",
+  "inScopeBoundary": {
+    "includeGlobs": [
+      "src/**",
+      "crates/video-reader-core/**",
+      "crates/video-reader-cli/**",
+      "crates/video-reader-mcp-server/**",
+      "bin/**",
+      "test/**"
+    ],
+    "excludeGlobs": [
+      "node_modules/**",
+      "dist/**",
+      "target/**",
+      "benchmark-artifacts/**"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "transport/web-mcp-http",
+      "domain": "transport",
+      "weight": 5,
+      "state": "rust_impl",
+      "tsSurface": "src/index.ts (legacy TS HTTP retired on this branch when VIDEO_READER uses Rust http)",
+      "parityTest": "test/httpTransport.matrix.test.ts; test/check-no-ts-http-backend.test.ts; cargo test -p video-reader-mcp-server",
+      "prodProbe": "MCP_TRANSPORT=http npx @sylphx/video-reader-mcp (TS path on main)",
+      "notes": "PR#10 rebuild: Rust Streamable HTTP on branch; main tip previously stdio-only. Fail-closed rust_impl only (rej-010). Decontaminated denominator retained.",
+      "rustSurface": "crates/video-reader-mcp-server/src/http_transport.rs; crates/video-reader-mcp-server/src/main.rs",
+      "differentialTest": "scripts/run-video-reader-differential.sh (if present); benchmark:release-gate",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion to authority_rust/ts_deleted",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-13T19:27:09Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "crates/video-reader-mcp-server/src/http_transport.rs",
+          "crates/video-reader-mcp-server/src/main.rs",
+          "src/index.ts",
+          "test/httpTransport.matrix.test.ts",
+          "bin/video-reader-mcp"
+        ],
+        "staleReason": "FLEET35 rebuild: HTTP transport code rebased onto decontaminated main; differential_green not yet executed at bound SHAs"
+      }
+    },
+    {
+      "id": "transport/stdio-rust-rmcp",
+      "domain": "transport",
+      "weight": 4,
+      "state": "rust_impl",
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "bin/video-reader-mcp",
+          "bin/native/video-reader-mcp-server",
+          "crates/video-reader-mcp-server/src/main.rs",
+          "crates/video-reader-mcp-server/src/lib.rs"
+        ],
+        "staleReason": "TICK024: Rust stdio rmcp present on main and is default bin path, but no SHA-bound differential harness on main (scripts/run-video-reader-differential.sh ABSENT). proof.status missing — NO promotion."
+      },
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010 + TICK024 decontamination — rust_impl on disk only; differential_green required before parity_proven/authority_rust",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-11T13:30:00Z"
+      },
+      "rustSurface": "crates/video-reader-mcp-server/src/main.rs (rmcp::transport::stdio())",
+      "parityTest": "test/shippedPath.matrix.test.ts; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate; bin/video-reader-mcp default (Rust when native staged)",
+      "notes": "bin/video-reader-mcp defaults to Rust native video-reader-mcp-server; VIDEO_READER_MCP_TRANSPORT=ts opts into TS. SHA-bound differential harness not on main."
+    },
+    {
+      "id": "transport/stdio-ts-adapter",
+      "domain": "transport",
+      "weight": 4,
+      "state": "ts_only",
+      "tsSurface": "src/index.ts",
+      "parityTest": "test/shippedPath.matrix.test.ts",
+      "notes": "Opt-in TS stdio MCP adapter via VIDEO_READER_MCP_TRANSPORT=ts (or bin arg ts). Deletion gates/scripts (check-ts-adapter-deletion-ready.sh, check-no-ts-stdio-backend.sh) ABSENT on main. ts_deleted NOT claimed (rej-001)."
+    },
+    {
+      "id": "tool/read_video",
+      "domain": "mcp-tools",
+      "weight": 5,
+      "state": "rust_impl",
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "src/handlers/readVideo.ts",
+          "crates/video-reader-mcp-server/src/read_video.rs",
+          "crates/video-reader-core/src/read_video.rs",
+          "test/readVideo.integration.test.ts",
+          "test/shippedPath.matrix.test.ts"
+        ],
+        "staleReason": "TICK024: source-derived inventory — Rust + TS handlers present; no SHA-bound differential_green on main. NO promotion."
+      },
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-11T13:30:00Z"
+      },
+      "tsSurface": "src/handlers/readVideo.ts",
+      "rustSurface": "crates/video-reader-mcp-server/src/read_video.rs",
+      "parityTest": "test/readVideo.integration.test.ts; test/shippedPath.matrix.test.ts; test/rustTimeline.boundary.test.ts; cargo test -p video-reader-core; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate → read_video shipped path",
+      "notes": "Primary MCP tool. Registered in src/index.ts tools map and rmcp #[tool] router. Engine route rust-read-video-v1 via video-reader-core when ffprobe available. Replaces contaminated tool/read_pdf claim."
+    },
+    {
+      "id": "tool/video_evidence",
+      "domain": "mcp-tools",
+      "weight": 5,
+      "state": "rust_impl",
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "src/handlers/videoEvidence.ts",
+          "crates/video-reader-mcp-server/src/video_evidence.rs",
+          "crates/video-reader-core/src/video_evidence.rs",
+          "src/engine/rust-video-evidence.ts",
+          "test/videoEvidence.boundary.test.ts"
+        ],
+        "staleReason": "TICK024: source-derived inventory — Rust + TS handlers present; no SHA-bound differential_green on main. NO promotion."
+      },
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-11T13:30:00Z"
+      },
+      "tsSurface": "src/handlers/videoEvidence.ts",
+      "rustSurface": "crates/video-reader-mcp-server/src/video_evidence.rs",
+      "parityTest": "test/videoEvidence.boundary.test.ts; test/frames.boundary.test.ts; cargo test -p video-reader-core; cargo test -p video-reader-mcp-server",
+      "prodProbe": "benchmark:release-gate → video_evidence render_frame/crop_frame",
+      "notes": "Follow-up MCP tool (render_frame, crop_frame; ocr_frame unavailable). Registered in src/index.ts and rmcp router. Replaces contaminated tool/search_pdf + tool/pdf_evidence claims (wrong domain; no search_pdf surface in this product)."
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "ts_only": 1,
+    "contracted": 0,
+    "rust_impl": 4,
+    "parity_proven": 0,
+    "authority_rust": 0,
+    "ts_deleted": 0,
+    "proof_missing": 4,
+    "completion_progress": 0.0,
+    "authority_progress": 0.0,
+    "weighted_progress": 0.413,
+    "decontamination": {
+      "packetId": "VIDEO-READER-MCP-CONTAMINATION-TICK024",
+      "removedForeignCapabilityIds": [
+        "tool/read_pdf",
+        "tool/search_pdf",
+        "tool/pdf_evidence"
+      ],
+      "addedSourceDerivedCapabilityIds": [
+        "tool/read_video",
+        "tool/video_evidence"
+      ],
+      "priorTotal": 6,
+      "newTotal": 5,
+      "notes": "Denominator drop 6→5 is intentional contamination remediation (pdf-domain tools never existed here). Control-plane sealed baseline must re-seal after product merge — not a silent regression."
+    },
+    "notes": "FLEET35 PR#10 rebuild: transport/web-mcp-http rust_impl under rej-010; no authority/ts_deleted claims"
+  },
+  "promotionFreeze": {
+    "active": true,
+    "reason": "TICK024 decontamination + rej-010 — 0 capabilities with differential_green or canary_green; no promotions",
+    "rejectionRef": "rej-010",
+    "since": "2026-07-11T13:30:00Z"
+  },
+  "postMergeGate": {
+    "prodSmokeScript": "bun run benchmark:release-gate",
+    "notes": "ts_deleted for transport/stdio-ts-adapter blocked until deletion PR + prod smoke (rej-001). Rust HTTP authority blocked until PR #10 merge + differential proof. differential_green required before parity_proven/authority_rust (rej-010)."
+  },
+  "slices": {
+    "S1-tools": {
+      "status": "shipped_rust_impl_unproven",
+      "evidence": [
+        "src/handlers/readVideo.ts",
+        "src/handlers/videoEvidence.ts",
+        "src/index.ts",
+        "crates/video-reader-mcp-server/src/read_video.rs",
+        "crates/video-reader-mcp-server/src/video_evidence.rs",
+        "crates/video-reader-mcp-server/src/tool_routes.rs",
+        "crates/video-reader-core/src/read_video.rs",
+        "crates/video-reader-core/src/video_evidence.rs",
+        "test/readVideo.integration.test.ts",
+        "test/videoEvidence.boundary.test.ts",
+        "test/shippedPath.matrix.test.ts"
+      ],
+      "notes": "tool/read_video + tool/video_evidence rust_impl on main. No differential harness on main."
+    },
+    "S2-stdio-rust-default": {
+      "status": "shipped_rust_impl_unproven",
+      "evidence": [
+        "bin/video-reader-mcp",
+        "bin/native/video-reader-mcp-server",
+        "crates/video-reader-mcp-server/src/main.rs",
+        "crates/video-reader-mcp-server/src/lib.rs"
+      ],
+      "notes": "Default bin launches Rust rmcp stdio when native present; TS opt-in via VIDEO_READER_MCP_TRANSPORT=ts."
+    },
+    "S3-http-rust": {
+      "status": "rust_impl_on_branch",
+      "evidence": [
+        "crates/video-reader-mcp-server/src/http_transport.rs",
+        "crates/video-reader-mcp-server/src/main.rs",
+        "test/httpTransport.matrix.test.ts",
+        "scripts/check-no-ts-http-backend.sh"
+      ],
+      "notes": "FLEET35 rebuilt onto decontaminated main; awaiting merge + differential_green"
+    }
+  }
+}
