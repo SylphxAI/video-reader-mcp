@@ -1,0 +1,189 @@
+{
+  "corpusVersion": 1,
+  "toolRouteCases": [
+    {
+      "id": "route-read-video",
+      "tool": "read_video",
+      "expect": "RustCore"
+    },
+    {
+      "id": "route-video-evidence",
+      "tool": "video_evidence",
+      "expect": "RustCore"
+    },
+    {
+      "id": "route-hash-source",
+      "tool": "hash_source",
+      "expect": "RustCore"
+    },
+    {
+      "id": "route-build-cache-key",
+      "tool": "build_cache_key",
+      "expect": "RustCore"
+    },
+    {
+      "id": "route-assemble-probe-timeline",
+      "tool": "assemble_probe_timeline",
+      "expect": "RustCore"
+    }
+  ],
+  "serverContract": {
+    "name": "video-reader-mcp",
+    "version": "0.1.0",
+    "tools": [
+      "read_video",
+      "video_evidence"
+    ]
+  },
+  "allowList": {
+    "tools": [
+      "read_video",
+      "video_evidence"
+    ],
+    "note": "fail-closed public MCP surface; pure residual only \u2014 no ffprobe/ffmpeg effect, no HTTP transport claimed"
+  },
+  "hashCases": [
+    {
+      "id": "hash-demo-bytes",
+      "fixture": "differential/demo.bin",
+      "expect": {
+        "status": "ok",
+        "source_hash": "3957a235fae214722cb1521c7702aca6a4a6deefcbf5f7e221879662ed84cd4b"
+      }
+    }
+  ],
+  "cacheKeyCases": [
+    {
+      "id": "cache-key-default-options",
+      "source_hash": "abc123",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true,
+        "include_subtitles": true,
+        "include_scenes": true,
+        "include_transcript": false,
+        "include_keyframes": false,
+        "include_keyframe_images": false,
+        "keyframe_limit": 8,
+        "keyframe_max_dimension": null,
+        "scene_threshold": 0.4
+      },
+      "expect": {
+        "status": "ok",
+        "cache_key": "954d7fa8dac1c56c168d58243fc6a9b8605e835e9fdef22432f1fc8f6894278e"
+      }
+    },
+    {
+      "id": "cache-key-no-subtitles",
+      "source_hash": "abc123",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true,
+        "include_subtitles": false,
+        "include_scenes": true,
+        "include_transcript": false,
+        "include_keyframes": false,
+        "include_keyframe_images": false,
+        "keyframe_limit": 8,
+        "keyframe_max_dimension": null,
+        "scene_threshold": 0.4
+      },
+      "expect": {
+        "status": "ok",
+        "cache_key": "39aa5604f068a3efa5fd4160f67bf6622b791be553b4a3731a5cb6dc3c61faf8"
+      }
+    },
+    {
+      "id": "cache-key-include-keyframes",
+      "source_hash": "abc123",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true,
+        "include_subtitles": true,
+        "include_scenes": true,
+        "include_transcript": false,
+        "include_keyframes": true,
+        "include_keyframe_images": false,
+        "keyframe_limit": 8,
+        "keyframe_max_dimension": null,
+        "scene_threshold": 0.4
+      },
+      "expect": {
+        "status": "ok",
+        "cache_key": "8421632a63ef5aa6d018651c6d0f5d40ad5a5ce1ba5db21d278a907221632b57"
+      }
+    },
+    {
+      "id": "cache-key-include-transcript",
+      "source_hash": "abc123",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true,
+        "include_subtitles": true,
+        "include_scenes": true,
+        "include_transcript": true,
+        "include_keyframes": false,
+        "include_keyframe_images": false,
+        "keyframe_limit": 8,
+        "keyframe_max_dimension": null,
+        "scene_threshold": 0.4
+      },
+      "expect": {
+        "status": "ok",
+        "cache_key": "8d779a98d8ab5a9fbe73650bf80ace3ace14edf32e8b48ff1e5eb97ef88a2533"
+      }
+    }
+  ],
+  "timelineCases": [
+    {
+      "id": "timeline-multi-stream",
+      "probe_fixture": "probes/multi-stream.json",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true
+      },
+      "expect": {
+        "status": "ok",
+        "route": "rust-timeline",
+        "duration_ms": 125500,
+        "stream_count": 3,
+        "chapter_title": "Intro",
+        "warnings_contains": [
+          "variable frame rate suspected"
+        ]
+      }
+    },
+    {
+      "id": "timeline-no-subtitle-probe",
+      "probe_fixture": "probes/no-subtitle.json",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true
+      },
+      "expect": {
+        "status": "ok",
+        "route": "rust-timeline",
+        "warnings_contains": [
+          "No audio stream"
+        ]
+      }
+    },
+    {
+      "id": "timeline-subtitle-stream",
+      "probe_fixture": "probes/subtitle-stream.json",
+      "options": {
+        "include_streams": true,
+        "include_chapters": true
+      },
+      "expect": {
+        "status": "ok",
+        "route": "rust-timeline",
+        "duration_ms": 12500,
+        "stream_count": 2,
+        "warnings_contains": [
+          "No audio stream"
+        ]
+      }
+    }
+  ]
+}

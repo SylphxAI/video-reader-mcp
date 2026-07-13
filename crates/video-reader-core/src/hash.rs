@@ -89,4 +89,115 @@ mod tests {
         assert_eq!(first, second);
         assert_ne!(first, build_cache_key("def456", &options));
     }
+
+
+    #[test]
+    fn cache_key_changes_when_options_flip() {
+        let base = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let mut flipped = base.clone();
+        flipped.include_transcript = true;
+        let k1 = build_cache_key("src-hash", &base);
+        let k2 = build_cache_key("src-hash", &flipped);
+        assert_ne!(k1, k2);
+        flipped.include_transcript = false;
+        flipped.keyframe_limit = 16;
+        assert_ne!(k1, build_cache_key("src-hash", &flipped));
+        flipped.keyframe_limit = 8;
+        flipped.scene_threshold = 0.2;
+        assert_ne!(k1, build_cache_key("src-hash", &flipped));
+    }
+
+    #[test]
+    fn bw7_cache_key_dimension_and_defaults_pure() {
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!(default_true());
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+        let mut opts = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: false,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let base = build_cache_key("h", &opts);
+        opts.keyframe_max_dimension = Some(320);
+        assert_ne!(base, build_cache_key("h", &opts));
+        opts.keyframe_max_dimension = None;
+        opts.include_keyframe_images = true;
+        assert_ne!(base, build_cache_key("h", &opts));
+    }
+
+
+    #[test]
+    fn bw8_cache_key_sensitive_to_each_flag() {
+        let base = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let k0 = build_cache_key("src", &base);
+        let mut o = base.clone();
+        o.include_streams = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_chapters = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_subtitles = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_scenes = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_keyframes = true;
+        assert_ne!(k0, build_cache_key("src", &o));
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+    }
+
+
+    #[test]
+    fn bulk_default_option_helpers_and_key_diff_on_threshold() {
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!(default_true());
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+        let mut a = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let b = a.clone();
+        a.scene_threshold = 0.5;
+        assert_ne!(build_cache_key("h", &a), build_cache_key("h", &b));
+    }
 }

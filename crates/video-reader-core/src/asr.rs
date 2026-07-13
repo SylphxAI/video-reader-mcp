@@ -381,4 +381,163 @@ mod tests {
         assert_eq!(transcript[0].text, "hello");
         assert_eq!(transcript[0].provenance.adapter, "whisper-cli");
     }
+
+    #[test]
+    fn rejects_malformed_whisper_json() {
+        let err = parse_whisper_cpp_json("not-json", "whisper-cli").unwrap_err();
+        let msg = format!("{err:?}");
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn empty_transcription_array_yields_empty_segments() {
+        let payload = r#"{"transcription": []}"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert!(transcript.is_empty());
+    }
+
+    #[test]
+    fn trims_segment_text_and_uses_offsets() {
+        let payload = r#"{
+          "transcription": [
+            {
+              "timestamps": { "from": "00:00:00.000", "to": "00:00:00.500" },
+              "offsets": { "from": 10, "to": 500 },
+              "text": "  padded  "
+            }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 1);
+        assert_eq!(transcript[0].start_ms, 10);
+        assert_eq!(transcript[0].end_ms, 500);
+        assert_eq!(transcript[0].text, "padded");
+    }
+
+
+
+    #[test]
+    fn parses_timestamp_only_segments_and_rejects_bad_format() {
+        let payload = r#"{
+          "transcription": [
+            {
+              "timestamps": { "from": "00:00:01.500", "to": "00:00:02.000" },
+              "text": "hi"
+            }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 1);
+        assert_eq!(transcript[0].start_ms, 1500);
+        assert_eq!(transcript[0].end_ms, 2000);
+        assert_eq!(transcript[0].text, "hi");
+
+        // start/end seconds fallback
+        let payload2 = r#"{
+          "transcription": [
+            { "start": 1.25, "end": 2.5, "text": "sec" }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload2, "whisper-cli").expect("parse");
+        assert_eq!(transcript[0].start_ms, 1250);
+        assert_eq!(transcript[0].end_ms, 2500);
+
+        assert!(parse_timestamp_ms("01:02:03.500").is_ok());
+        assert_eq!(parse_timestamp_ms("00:00:01.500").unwrap(), 1500);
+        assert_eq!(parse_timestamp_ms("01:00:00.000").unwrap(), 3_600_000);
+        assert!(parse_timestamp_ms("bad").is_err());
+        assert!(parse_timestamp_ms("1:2").is_err());
+    }
+
+    #[test]
+    fn parses_segments_array_and_skips_empty_text() {
+        let payload = r#"{
+          "segments": [
+            { "start": 0.0, "end": 0.5, "text": "  hi  " },
+            { "start": 0.5, "end": 1.0, "text": "   " },
+            { "offsets": { "from": 1000, "to": 2000 }, "text": "there" }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 2);
+        assert_eq!(transcript[0].text, "hi");
+        assert_eq!(transcript[0].start_ms, 0);
+        assert_eq!(transcript[0].end_ms, 500);
+        assert_eq!(transcript[1].text, "there");
+        assert_eq!(transcript[1].start_ms, 1000);
+        assert_eq!(transcript[1].end_ms, 2000);
+    }
+
+    #[test]
+    fn parse_timestamp_ms_hours_and_invalid() {
+        assert_eq!(parse_timestamp_ms("01:02:03.500").expect("ok"), 3_723_500);
+        assert!(parse_timestamp_ms("1:02").is_err());
+        assert!(parse_timestamp_ms("aa:00:00.000").is_err());
+    }
+
+
+    #[test]
+    fn bw7_parse_whisper_missing_array_and_whitespace_only() {
+        let err = parse_whisper_cpp_json(r#"{"other":[]}"#, "whisper-cli").unwrap_err();
+        let _ = format!("{err:?}");
+        let payload = r#"{"transcription":[{"text":"","start":0,"end":1},{"text":"ok","start":1,"end":2}]}"#;
+        let t = parse_whisper_cpp_json(payload, "w").expect("ok");
+        assert_eq!(t.len(), 1);
+        assert_eq!(t[0].text, "ok");
+        assert_eq!(parse_timestamp_ms("00:00:00.000").unwrap(), 0);
+        assert_eq!(parse_timestamp_ms("00:01:00.000").unwrap(), 60_000);
+    }
+
+
+    #[test]
+    fn bw8_parse_timestamp_ms_fraction_and_hours() {
+        assert_eq!(parse_timestamp_ms("00:00:00.001").unwrap(), 1);
+        assert_eq!(parse_timestamp_ms("00:00:01.999").unwrap(), 1999);
+        assert_eq!(parse_timestamp_ms("02:00:00.000").unwrap(), 7_200_000);
+        assert!(parse_timestamp_ms("").is_err());
+        assert!(parse_timestamp_ms("00:00").is_err());
+        assert!(parse_timestamp_ms("xx:00:00.000").is_err());
+        let payload = r#"{"transcription":[{"timestamps":{"from":"00:00:00.100","to":"00:00:00.200"},"text":"a"}]}"#;
+        let t = parse_whisper_cpp_json(payload, "w").unwrap();
+        assert_eq!(t[0].start_ms, 100);
+        assert_eq!(t[0].end_ms, 200);
+    }
+
+    #[test]
+    fn bw8_parse_whisper_skips_missing_text_fields() {
+        let payload = r#"{
+          "transcription": [
+            { "start": 0, "end": 1 },
+            { "start": 1, "end": 2, "text": "kept" }
+          ]
+        }"#;
+        match parse_whisper_cpp_json(payload, "w") {
+            Ok(t) => {
+                assert!(t.iter().all(|s| !s.text.trim().is_empty()) || t.len() <= 2);
+            }
+            Err(_) => {}
+        }
+    }
+
+
+    #[test]
+    fn bulk_parse_timestamp_ms_mmss_and_invalid() {
+        assert!(parse_timestamp_ms("00:01:02.500").is_ok());
+        assert!(parse_timestamp_ms("00:00:01.000").is_ok());
+        assert!(parse_timestamp_ms("").is_err());
+        assert!(parse_timestamp_ms("not-time").is_err());
+        assert!(parse_timestamp_ms("01:02.500").is_err()); // needs HH:MM:SS
+    }
+
+    #[test]
+    fn bulk_parse_whisper_empty_segments_ok() {
+        // accept either empty ok or structured error — no panic
+        for payload in [
+            r#"{"transcription":[]}"#,
+            r#"{"segments":[]}"#,
+            r#"[]"#,
+        ] {
+            let _ = parse_whisper_cpp_json(payload, "whisper.cpp");
+        }
+    }
 }

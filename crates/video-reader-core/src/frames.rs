@@ -451,4 +451,145 @@ mod tests {
         let times = parse_keyframe_times(stderr, 8);
         assert_eq!(times, vec![0, 2000]);
     }
+
+    #[test]
+    fn parse_keyframe_times_and_frame_filter_pure() {
+        let stderr = "n:0 pts_time:0.000\nn:1 pts_time:1.250 foo\nn:2 pts_time:2.5\nbad line\nn:3 pts_time:3.0\n";
+        assert_eq!(parse_keyframe_times(stderr, 2), vec![0, 1250]);
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![0, 1250, 2500, 3000]);
+        assert!(parse_keyframe_times("no times", 5).is_empty());
+        assert_eq!(build_frame_filter(None, None), "scale=iw:ih");
+        assert_eq!(
+            build_frame_filter(Some(320), None),
+            "scale='min(320,iw)':-2"
+        );
+        let crop = CropRegion {
+            x: 1,
+            y: 2,
+            width: 10,
+            height: 20,
+        };
+        assert_eq!(
+            build_frame_filter(None, Some(&crop)),
+            "crop=10:20:1:2,scale=iw:ih"
+        );
+        assert_eq!(
+            build_frame_filter(Some(0), Some(&crop)),
+            "crop=10:20:1:2,scale=iw:ih"
+        );
+        assert_eq!(
+            build_frame_filter(Some(64), Some(&crop)),
+            "crop=10:20:1:2,scale='min(64,iw)':-2"
+        );
+    }
+
+    #[test]
+    fn png_dimensions_and_base64_encode_pure() {
+        // minimal IHDR layout: 8-byte sig + length/type + width/height
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        bytes.extend_from_slice(&[0, 0, 0, 13]); // length
+        bytes.extend_from_slice(b"IHDR");
+        bytes.extend_from_slice(&12u32.to_be_bytes());
+        bytes.extend_from_slice(&8u32.to_be_bytes());
+        // pad to 24+
+        while bytes.len() < 24 {
+            bytes.push(0);
+        }
+        assert_eq!(png_dimensions(&bytes), Some((12, 8)));
+        assert_eq!(png_dimensions(&[]), None);
+        assert_eq!(png_dimensions(&[0u8; 30]), None);
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+    }
+
+
+
+    #[test]
+    fn bw7_parse_keyframe_times_limit_zero_and_bad_tokens() {
+        let stderr = "pts_time:1.0\npts_time:notanumber\npts_time:2.5 extra\n";
+        // Honest contract: limit is checked after push (`len >= limit`), so limit=0
+        // still records the first parsed time then breaks (1 >= 0).
+        assert_eq!(parse_keyframe_times(stderr, 0), vec![1000]);
+        assert_eq!(parse_keyframe_times(stderr, 1), vec![1000]);
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![1000, 2500]);
+        assert_eq!(build_frame_filter(Some(0), None), "scale=iw:ih");
+    }
+
+    #[test]
+    fn bw7_png_dimensions_short_and_base64_pad() {
+        assert_eq!(png_dimensions(&[137, 80, 78, 71]), None);
+        let bad_sig = vec![0u8; 24];
+        assert_eq!(png_dimensions(&bad_sig), None);
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+    }
+
+
+    #[test]
+    fn bw8_parse_keyframe_times_rounding_and_limit() {
+        let stderr = "pts_time:0.0004\npts_time:0.0006\npts_time:1.9996\n";
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![0, 1, 2000]);
+        assert_eq!(parse_keyframe_times(stderr, 2), vec![0, 1]);
+        assert_eq!(parse_keyframe_times("pts_time:\n", 5), Vec::<u64>::new());
+        assert_eq!(build_frame_filter(Some(0), None), "scale=iw:ih");
+        assert_eq!(build_frame_filter(None, None), "scale=iw:ih");
+    }
+
+    #[test]
+    fn bw8_png_dimensions_1x1_and_base64_multi() {
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        bytes.extend_from_slice(&[0, 0, 0, 13]);
+        bytes.extend_from_slice(b"IHDR");
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        while bytes.len() < 24 {
+            bytes.push(0);
+        }
+        assert_eq!(png_dimensions(&bytes), Some((1, 1)));
+        assert_eq!(base64_encode(b"foobar"), "Zm9vYmFy");
+        assert_eq!(base64_encode(b"foob"), "Zm9vYg==");
+        assert_eq!(base64_encode(b"fooba"), "Zm9vYmE=");
+    }
+
+
+    #[test]
+    fn bulk_build_frame_filter_crop_and_max_dimension() {
+        let crop = CropRegion { x: 1, y: 2, width: 3, height: 4 };
+        let f = build_frame_filter(Some(640), Some(&crop));
+        assert!(f.contains("crop=3:4:1:2"), "{f}");
+        assert!(f.contains("scale="), "{f}");
+        let f2 = build_frame_filter(None, Some(&crop));
+        assert!(f2.contains("crop="), "{f2}");
+        let f3 = build_frame_filter(Some(0), None);
+        assert_eq!(f3, "scale=iw:ih");
+        let f4 = build_frame_filter(None, None);
+        assert_eq!(f4, "scale=iw:ih");
+    }
+
+    #[test]
+    fn bulk_png_dimensions_rejects_short_and_bad_magic() {
+        assert_eq!(png_dimensions(b"short"), None);
+        assert_eq!(png_dimensions(&[0u8; 24]), None);
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        while bytes.len() < 24 {
+            bytes.push(0);
+        }
+        bytes[16..20].copy_from_slice(&2u32.to_be_bytes());
+        bytes[20..24].copy_from_slice(&3u32.to_be_bytes());
+        assert_eq!(png_dimensions(&bytes), Some((2, 3)));
+    }
+
+    #[test]
+    fn bulk_parse_keyframe_times_skips_garbage_and_sorts() {
+        // Pure residual contract: keep encounter order; skip unparsable tokens; apply limit.
+        let stderr = "pts_time:3.0\nbogus\npts_time:1.25\npts_time:not-a-number\n";
+        let times = parse_keyframe_times(stderr, 10);
+        assert_eq!(times, vec![3000, 1250], "{times:?}");
+        let limited = parse_keyframe_times(stderr, 1);
+        assert_eq!(limited, vec![3000], "{limited:?}");
+    }
 }

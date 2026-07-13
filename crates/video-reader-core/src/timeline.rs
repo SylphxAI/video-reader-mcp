@@ -322,4 +322,200 @@ mod tests {
             .iter()
             .any(|warning| warning.contains("No audio stream")));
     }
+
+    #[test]
+    fn assembles_subtitle_stream_probe_without_audio() {
+        let raw = std::fs::read_to_string(fixture_path("subtitle-stream.json")).expect("fixture");
+        let ffprobe: Value = serde_json::from_str(&raw).expect("json");
+        let timeline = assemble_probe_timeline(
+            &ffprobe,
+            &AssembleOptions {
+                include_streams: true,
+                include_chapters: true,
+            },
+        );
+        assert_eq!(timeline.format.duration_ms, 12_500);
+        assert_eq!(timeline.streams.len(), 2);
+        assert!(timeline
+            .warnings
+            .iter()
+            .any(|w| w.contains("No audio stream")), "{:?}", timeline.warnings);
+        assert_eq!(timeline.route, TIMELINE_ROUTE);
+    }
+
+
+
+    #[test]
+    fn seconds_to_ms_and_optional_stream_omit() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(None), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(1.5))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!("2.25"))), 2250);
+        assert_eq!(seconds_to_ms(Some(&json!("bad"))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(null))), 0);
+        assert_eq!(parse_u64(Some(&json!(42))), Some(42));
+        assert_eq!(parse_u64(Some(&json!("99"))), Some(99));
+        assert_eq!(parse_u64(None), None);
+
+        let probe = json!({
+            "format": { "format_name": "mov", "duration": "10.0", "bit_rate": "1000", "size": "2048" },
+            "streams": [
+                { "index": 0, "codec_type": "video", "codec_name": "h264", "width": 640, "height": 360 },
+                { "index": 1, "codec_type": "audio", "codec_name": "aac" }
+            ],
+            "chapters": [
+                { "id": 0, "start_time": "0", "end_time": "10", "tags": { "title": "Full" } }
+            ]
+        });
+        let full = assemble_probe_timeline(
+            &probe,
+            &AssembleOptions {
+                include_streams: true,
+                include_chapters: true,
+            },
+        );
+        assert_eq!(full.format.duration_ms, 10_000);
+        assert_eq!(full.streams.len(), 2);
+        assert_eq!(full.chapters.len(), 1);
+        assert_eq!(full.chapters[0].title.as_deref(), Some("Full"));
+
+        let slim = assemble_probe_timeline(
+            &probe,
+            &AssembleOptions {
+                include_streams: false,
+                include_chapters: false,
+            },
+        );
+        assert!(slim.streams.is_empty());
+        assert!(slim.chapters.is_empty());
+        assert_eq!(slim.format.duration_ms, 10_000);
+        assert_eq!(slim.route, TIMELINE_ROUTE);
+    }
+
+    #[test]
+    fn seconds_to_ms_and_parse_u64_edges_bw6() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(Some(&json!("1.5"))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!(2))), 2000);
+        assert_eq!(seconds_to_ms(Some(&json!(2.25))), 2250);
+        assert_eq!(seconds_to_ms(None), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(null))), 0);
+        assert_eq!(parse_u64(Some(&json!(42))), Some(42));
+        assert_eq!(parse_u64(Some(&json!("7"))), Some(7));
+        assert_eq!(parse_u64(Some(&json!("nope"))), None);
+        assert_eq!(parse_u64(None), None);
+    }
+
+    #[test]
+    fn collect_probe_warnings_video_only_and_missing_both() {
+        use serde_json::json;
+        let streams = vec![json!({"codec_type":"video","avg_frame_rate":"0/0","r_frame_rate":"0/0"})];
+        let format = json!({});
+        let warnings = collect_probe_warnings(&streams, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("No audio")));
+        let empty: Vec<serde_json::Value> = vec![];
+        let warnings = collect_probe_warnings(&empty, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("No video")));
+        assert!(warnings.iter().any(|w| w.contains("No audio")));
+        let warnings = collect_probe_warnings(&empty, &format, false);
+        assert!(warnings.is_empty() || !warnings.iter().any(|w| w.contains("No video")));
+    }
+
+
+    #[test]
+    fn bw7_collect_probe_warnings_vfr_and_zero_duration() {
+        use serde_json::json;
+        let streams = vec![json!({
+            "index": 0,
+            "codec_type": "video",
+            "avg_frame_rate": "30/1",
+            "r_frame_rate": "60/1"
+        }), json!({"codec_type":"audio"})];
+        let format = json!({"duration": "0"});
+        let warnings = collect_probe_warnings(&streams, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("variable frame rate")), "{warnings:?}");
+        assert!(warnings.iter().any(|w| w.contains("Duration unavailable") || w.contains("zero")), "{warnings:?}");
+        assert_eq!(seconds_to_ms(Some(&json!(0))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!("0.001"))), 1);
+        assert_eq!(parse_u64(Some(&json!(0))), Some(0));
+    }
+
+
+    #[test]
+    fn bw8_seconds_to_ms_non_finite_and_string_edges() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(Some(&json!("not-a-number"))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(true))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!([]))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(3600))), 3_600_000);
+        assert_eq!(seconds_to_ms(Some(&json!("3600.5"))), 3_600_500);
+        assert_eq!(parse_u64(Some(&json!(u64::MAX))), Some(u64::MAX));
+        assert_eq!(parse_u64(Some(&json!(-1))), None);
+    }
+
+    #[test]
+    fn bw8_map_streams_skips_missing_index_or_type() {
+        use serde_json::json;
+        let streams = vec![
+            json!({"codec_type": "video"}),
+            json!({"index": 0}),
+            json!({"index": 1, "codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080, "sample_rate": "48000", "channels": 0, "bit_rate": "128000", "tags": {"language": "eng"}}),
+        ];
+        let mapped = map_streams(&streams);
+        assert_eq!(mapped.len(), 1);
+        assert_eq!(mapped[0].index, 1);
+        assert_eq!(mapped[0].codec_name.as_deref(), Some("h264"));
+        assert_eq!(mapped[0].width, Some(1920));
+        assert_eq!(mapped[0].language.as_deref(), Some("eng"));
+    }
+
+    #[test]
+    fn bw8_map_chapters_and_collect_warnings_duration_number() {
+        use serde_json::json;
+        let chapters = vec![
+            json!({"id": 1, "start": "1.5", "end": 3, "tags": {"title": "Intro"}}),
+            json!({"start": 0}),
+        ];
+        let mapped = map_chapters(&chapters);
+        assert_eq!(mapped.len(), 1);
+        assert_eq!(mapped[0].id, 1);
+        assert_eq!(mapped[0].start_ms, 1500);
+        assert_eq!(mapped[0].end_ms, 3000);
+        assert_eq!(mapped[0].title.as_deref(), Some("Intro"));
+        let streams = vec![json!({"index": 0, "codec_type": "video", "avg_frame_rate": "24/1", "r_frame_rate": "24/1"}), json!({"codec_type":"audio"})];
+        let format = json!({"duration": 12.5});
+        let w = collect_probe_warnings(&streams, &format, true);
+        assert!(!w.iter().any(|x| x.contains("Duration unavailable")), "{w:?}");
+        assert!(!w.iter().any(|x| x.contains("variable frame rate")), "{w:?}");
+    }
+
+
+    #[test]
+    fn bulk_parse_u64_and_seconds_to_ms_edges() {
+        use serde_json::json;
+        assert_eq!(parse_u64(Some(&json!(12))), Some(12));
+        assert_eq!(parse_u64(Some(&json!("12"))), Some(12));
+        assert_eq!(parse_u64(Some(&json!(-1))), None);
+        assert_eq!(parse_u64(None), None);
+        assert_eq!(seconds_to_ms(Some(&json!(1.5))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!("2"))), 2000);
+        assert_eq!(seconds_to_ms(None), 0);
+    }
+
+    #[test]
+    fn bulk_assemble_probe_timeline_minimal_format() {
+        use serde_json::json;
+        let ffprobe = json!({
+            "format": {"duration": "1.5", "format_name": "mov,mp4", "bit_rate": "1000"},
+            "streams": [{"index":0,"codec_type":"video","codec_name":"h264","width":640,"height":360}],
+            "chapters": []
+        });
+        let opts = AssembleOptions {
+            include_streams: true,
+            include_chapters: true,
+        };
+        let tl = assemble_probe_timeline(&ffprobe, &opts);
+        assert!(tl.format.duration_ms >= 1000, "{:?}", tl.format.duration_ms);
+        assert!(!tl.streams.is_empty());
+    }
 }
