@@ -28,5 +28,6 @@
     "read_video",
     "video_evidence"
   ],
-  "promotionPolicy": "NO_PROMOTIONS \u2014 pure residual differential_green only; NOT read_video effect parity; NOT authority_rust; NOT HTTP; NOT ts_deleted; rej-010 hold remains for effect surfaces"
+  "promotionPolicy": "NO_PROMOTIONS \u2014 pure residual differential_green only; NOT read_video effect parity; NOT authority_rust; NOT HTTP; NOT ts_deleted; rej-010 hold remains for effect surfaces",
+  "tipSha": "83756b5bd1acf6c89997ad3dbe41034bdcd5ba4e"
 }
