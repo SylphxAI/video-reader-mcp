@@ -233,4 +233,15 @@ mod tests {
         let ok = parse_crop(&json!({"x":10,"y":20,"width":30,"height":40})).unwrap();
         assert_eq!((ok.x, ok.y, ok.width, ok.height), (10, 20, 30, 40));
     }
+
+
+    #[test]
+    fn bw8_parse_crop_zero_and_large_u64_cast() {
+        use serde_json::json;
+        let c = parse_crop(&json!({"x":0,"y":0,"width":0,"height":0})).unwrap();
+        assert_eq!((c.x, c.y, c.width, c.height), (0, 0, 0, 0));
+        let c = parse_crop(&json!({"x":100,"y":200,"width":300,"height":400})).unwrap();
+        assert_eq!((c.x, c.y, c.width, c.height), (100, 200, 300, 400));
+        assert!(parse_crop(&json!({"x":1.5,"y":0,"width":1,"height":1})).is_err());
+    }
 }

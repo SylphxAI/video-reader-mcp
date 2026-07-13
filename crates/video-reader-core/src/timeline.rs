@@ -440,4 +440,52 @@ mod tests {
         assert_eq!(parse_u64(Some(&json!(0))), Some(0));
     }
 
+
+    #[test]
+    fn bw8_seconds_to_ms_non_finite_and_string_edges() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(Some(&json!("not-a-number"))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(true))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!([]))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(3600))), 3_600_000);
+        assert_eq!(seconds_to_ms(Some(&json!("3600.5"))), 3_600_500);
+        assert_eq!(parse_u64(Some(&json!(u64::MAX))), Some(u64::MAX));
+        assert_eq!(parse_u64(Some(&json!(-1))), None);
+    }
+
+    #[test]
+    fn bw8_map_streams_skips_missing_index_or_type() {
+        use serde_json::json;
+        let streams = vec![
+            json!({"codec_type": "video"}),
+            json!({"index": 0}),
+            json!({"index": 1, "codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080, "sample_rate": "48000", "channels": 0, "bit_rate": "128000", "tags": {"language": "eng"}}),
+        ];
+        let mapped = map_streams(&streams);
+        assert_eq!(mapped.len(), 1);
+        assert_eq!(mapped[0].index, 1);
+        assert_eq!(mapped[0].codec_name.as_deref(), Some("h264"));
+        assert_eq!(mapped[0].width, Some(1920));
+        assert_eq!(mapped[0].language.as_deref(), Some("eng"));
+    }
+
+    #[test]
+    fn bw8_map_chapters_and_collect_warnings_duration_number() {
+        use serde_json::json;
+        let chapters = vec![
+            json!({"id": 1, "start": "1.5", "end": 3, "tags": {"title": "Intro"}}),
+            json!({"start": 0}),
+        ];
+        let mapped = map_chapters(&chapters);
+        assert_eq!(mapped.len(), 1);
+        assert_eq!(mapped[0].id, 1);
+        assert_eq!(mapped[0].start_ms, 1500);
+        assert_eq!(mapped[0].end_ms, 3000);
+        assert_eq!(mapped[0].title.as_deref(), Some("Intro"));
+        let streams = vec![json!({"index": 0, "codec_type": "video", "avg_frame_rate": "24/1", "r_frame_rate": "24/1"}), json!({"codec_type":"audio"})];
+        let format = json!({"duration": 12.5});
+        let w = collect_probe_warnings(&streams, &format, true);
+        assert!(!w.iter().any(|x| x.contains("Duration unavailable")), "{w:?}");
+        assert!(!w.iter().any(|x| x.contains("variable frame rate")), "{w:?}");
+    }
 }

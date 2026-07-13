@@ -143,4 +143,38 @@ mod tests {
         assert_ne!(base, build_cache_key("h", &opts));
     }
 
+
+    #[test]
+    fn bw8_cache_key_sensitive_to_each_flag() {
+        let base = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let k0 = build_cache_key("src", &base);
+        let mut o = base.clone();
+        o.include_streams = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_chapters = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_subtitles = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_scenes = false;
+        assert_ne!(k0, build_cache_key("src", &o));
+        o = base.clone();
+        o.include_keyframes = true;
+        assert_ne!(k0, build_cache_key("src", &o));
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+    }
 }

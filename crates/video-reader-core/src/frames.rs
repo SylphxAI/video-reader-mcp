@@ -527,4 +527,31 @@ mod tests {
         assert_eq!(base64_encode(b"fo"), "Zm8=");
         assert_eq!(base64_encode(b"foo"), "Zm9v");
     }
+
+
+    #[test]
+    fn bw8_parse_keyframe_times_rounding_and_limit() {
+        let stderr = "pts_time:0.0004\npts_time:0.0006\npts_time:1.9996\n";
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![0, 1, 2000]);
+        assert_eq!(parse_keyframe_times(stderr, 2), vec![0, 1]);
+        assert_eq!(parse_keyframe_times("pts_time:\n", 5), Vec::<u64>::new());
+        assert_eq!(build_frame_filter(Some(0), None), "scale=iw:ih");
+        assert_eq!(build_frame_filter(None, None), "scale=iw:ih");
+    }
+
+    #[test]
+    fn bw8_png_dimensions_1x1_and_base64_multi() {
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        bytes.extend_from_slice(&[0, 0, 0, 13]);
+        bytes.extend_from_slice(b"IHDR");
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        while bytes.len() < 24 {
+            bytes.push(0);
+        }
+        assert_eq!(png_dimensions(&bytes), Some((1, 1)));
+        assert_eq!(base64_encode(b"foobar"), "Zm9vYmFy");
+        assert_eq!(base64_encode(b"foob"), "Zm9vYg==");
+        assert_eq!(base64_encode(b"fooba"), "Zm9vYmE=");
+    }
 }

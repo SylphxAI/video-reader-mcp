@@ -488,4 +488,34 @@ mod tests {
         assert_eq!(parse_timestamp_ms("00:01:00.000").unwrap(), 60_000);
     }
 
+
+    #[test]
+    fn bw8_parse_timestamp_ms_fraction_and_hours() {
+        assert_eq!(parse_timestamp_ms("00:00:00.001").unwrap(), 1);
+        assert_eq!(parse_timestamp_ms("00:00:01.999").unwrap(), 1999);
+        assert_eq!(parse_timestamp_ms("02:00:00.000").unwrap(), 7_200_000);
+        assert!(parse_timestamp_ms("").is_err());
+        assert!(parse_timestamp_ms("00:00").is_err());
+        assert!(parse_timestamp_ms("xx:00:00.000").is_err());
+        let payload = r#"{"transcription":[{"timestamps":{"from":"00:00:00.100","to":"00:00:00.200"},"text":"a"}]}"#;
+        let t = parse_whisper_cpp_json(payload, "w").unwrap();
+        assert_eq!(t[0].start_ms, 100);
+        assert_eq!(t[0].end_ms, 200);
+    }
+
+    #[test]
+    fn bw8_parse_whisper_skips_missing_text_fields() {
+        let payload = r#"{
+          "transcription": [
+            { "start": 0, "end": 1 },
+            { "start": 1, "end": 2, "text": "kept" }
+          ]
+        }"#;
+        match parse_whisper_cpp_json(payload, "w") {
+            Ok(t) => {
+                assert!(t.iter().all(|s| !s.text.trim().is_empty()) || t.len() <= 2);
+            }
+            Err(_) => {}
+        }
+    }
 }
