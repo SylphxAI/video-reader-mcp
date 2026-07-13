@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "slice": "video-reader-mcp.pure-residual|all",
+  "status": "differential_green",
+  "verifiedAt": "2026-07-13T00:38:14Z",
+  "lastComparedMainSha": "1d376fd16b9dda137b0f824b084d652e898abf41",
+  "mergeGroupSha": "1d376fd16b9dda137b0f824b084d652e898abf41",
+  "baselineTsSha": "aca6aa37d80778e2723c65421ba8015f0bbab6eb",
+  "rustCandidateSha": "1d376fd16b9dda137b0f824b084d652e898abf41",
+  "behaviorSpecHash": "f8842909404f1a4e7492cb9f3bdcba2d26ba205355a6b5268fa8a6848aa65ca0",
+  "fixtureCorpusHash": "f8842909404f1a4e7492cb9f3bdcba2d26ba205355a6b5268fa8a6848aa65ca0",
+  "caseCount": 12,
+  "pureHashCaseCount": 1,
+  "pureCacheKeyCaseCount": 2,
+  "pureTimelineCaseCount": 2,
+  "harness": "scripts/run-video-reader-differential.sh",
+  "differentialTest": "crates/video-reader-mcp-server/tests/video_reader_mcp_differential.rs#pure_residual_differential_matches_ts_oracle",
+  "boundedSlices": {
+    "pure-hash": "pure_residual_differential_matches_ts_oracle",
+    "pure-cache-key": "pure_residual_differential_matches_ts_oracle",
+    "pure-timeline": "pure_residual_differential_matches_ts_oracle",
+    "tool-route-contract": "pure_residual_differential_matches_ts_oracle",
+    "server-contract": "pure_residual_differential_matches_ts_oracle",
+    "allow-list": "pure_residual_differential_matches_ts_oracle"
+  },
+  "oracle": "scripts/differential/video-reader-mcp-oracle.ts",
+  "allowList": [
+    "read_video",
+    "video_evidence"
+  ],
+  "promotionPolicy": "NO_PROMOTIONS \u2014 pure residual differential_green only; NOT read_video effect parity; NOT authority_rust; NOT HTTP; NOT ts_deleted; rej-010 hold remains for effect surfaces"
+}
