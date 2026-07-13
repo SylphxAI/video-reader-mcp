@@ -322,4 +322,25 @@ mod tests {
             .iter()
             .any(|warning| warning.contains("No audio stream")));
     }
+
+    #[test]
+    fn assembles_subtitle_stream_probe_without_audio() {
+        let raw = std::fs::read_to_string(fixture_path("subtitle-stream.json")).expect("fixture");
+        let ffprobe: Value = serde_json::from_str(&raw).expect("json");
+        let timeline = assemble_probe_timeline(
+            &ffprobe,
+            &AssembleOptions {
+                include_streams: true,
+                include_chapters: true,
+            },
+        );
+        assert_eq!(timeline.format.duration_ms, 12_500);
+        assert_eq!(timeline.streams.len(), 2);
+        assert!(timeline
+            .warnings
+            .iter()
+            .any(|w| w.contains("No audio stream")), "{:?}", timeline.warnings);
+        assert_eq!(timeline.route, TIMELINE_ROUTE);
+    }
+
 }

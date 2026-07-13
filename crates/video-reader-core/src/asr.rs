@@ -381,4 +381,37 @@ mod tests {
         assert_eq!(transcript[0].text, "hello");
         assert_eq!(transcript[0].provenance.adapter, "whisper-cli");
     }
+
+    #[test]
+    fn rejects_malformed_whisper_json() {
+        let err = parse_whisper_cpp_json("not-json", "whisper-cli").unwrap_err();
+        let msg = format!("{err:?}");
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn empty_transcription_array_yields_empty_segments() {
+        let payload = r#"{"transcription": []}"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert!(transcript.is_empty());
+    }
+
+    #[test]
+    fn trims_segment_text_and_uses_offsets() {
+        let payload = r#"{
+          "transcription": [
+            {
+              "timestamps": { "from": "00:00:00.000", "to": "00:00:00.500" },
+              "offsets": { "from": 10, "to": 500 },
+              "text": "  padded  "
+            }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 1);
+        assert_eq!(transcript[0].start_ms, 10);
+        assert_eq!(transcript[0].end_ms, 500);
+        assert_eq!(transcript[0].text, "padded");
+    }
+
 }
