@@ -89,4 +89,32 @@ mod tests {
         assert_eq!(first, second);
         assert_ne!(first, build_cache_key("def456", &options));
     }
+
+
+    #[test]
+    fn cache_key_changes_when_options_flip() {
+        let base = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: true,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let mut flipped = base.clone();
+        flipped.include_transcript = true;
+        let k1 = build_cache_key("src-hash", &base);
+        let k2 = build_cache_key("src-hash", &flipped);
+        assert_ne!(k1, k2);
+        flipped.include_transcript = false;
+        flipped.keyframe_limit = 16;
+        assert_ne!(k1, build_cache_key("src-hash", &flipped));
+        flipped.keyframe_limit = 8;
+        flipped.scene_threshold = 0.2;
+        assert_ne!(k1, build_cache_key("src-hash", &flipped));
+    }
 }

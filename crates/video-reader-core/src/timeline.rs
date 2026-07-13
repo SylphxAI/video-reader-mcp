@@ -343,4 +343,52 @@ mod tests {
         assert_eq!(timeline.route, TIMELINE_ROUTE);
     }
 
+
+
+    #[test]
+    fn seconds_to_ms_and_optional_stream_omit() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(None), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(1.5))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!("2.25"))), 2250);
+        assert_eq!(seconds_to_ms(Some(&json!("bad"))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(null))), 0);
+        assert_eq!(parse_u64(Some(&json!(42))), Some(42));
+        assert_eq!(parse_u64(Some(&json!("99"))), Some(99));
+        assert_eq!(parse_u64(None), None);
+
+        let probe = json!({
+            "format": { "format_name": "mov", "duration": "10.0", "bit_rate": "1000", "size": "2048" },
+            "streams": [
+                { "index": 0, "codec_type": "video", "codec_name": "h264", "width": 640, "height": 360 },
+                { "index": 1, "codec_type": "audio", "codec_name": "aac" }
+            ],
+            "chapters": [
+                { "id": 0, "start_time": "0", "end_time": "10", "tags": { "title": "Full" } }
+            ]
+        });
+        let full = assemble_probe_timeline(
+            &probe,
+            &AssembleOptions {
+                include_streams: true,
+                include_chapters: true,
+            },
+        );
+        assert_eq!(full.format.duration_ms, 10_000);
+        assert_eq!(full.streams.len(), 2);
+        assert_eq!(full.chapters.len(), 1);
+        assert_eq!(full.chapters[0].title.as_deref(), Some("Full"));
+
+        let slim = assemble_probe_timeline(
+            &probe,
+            &AssembleOptions {
+                include_streams: false,
+                include_chapters: false,
+            },
+        );
+        assert!(slim.streams.is_empty());
+        assert!(slim.chapters.is_empty());
+        assert_eq!(slim.format.duration_ms, 10_000);
+        assert_eq!(slim.route, TIMELINE_ROUTE);
+    }
 }

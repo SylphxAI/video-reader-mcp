@@ -414,4 +414,38 @@ mod tests {
         assert_eq!(transcript[0].text, "padded");
     }
 
+
+
+    #[test]
+    fn parses_timestamp_only_segments_and_rejects_bad_format() {
+        let payload = r#"{
+          "transcription": [
+            {
+              "timestamps": { "from": "00:00:01.500", "to": "00:00:02.000" },
+              "text": "hi"
+            }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 1);
+        assert_eq!(transcript[0].start_ms, 1500);
+        assert_eq!(transcript[0].end_ms, 2000);
+        assert_eq!(transcript[0].text, "hi");
+
+        // start/end seconds fallback
+        let payload2 = r#"{
+          "transcription": [
+            { "start": 1.25, "end": 2.5, "text": "sec" }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload2, "whisper-cli").expect("parse");
+        assert_eq!(transcript[0].start_ms, 1250);
+        assert_eq!(transcript[0].end_ms, 2500);
+
+        assert!(parse_timestamp_ms("01:02:03.500").is_ok());
+        assert_eq!(parse_timestamp_ms("00:00:01.500").unwrap(), 1500);
+        assert_eq!(parse_timestamp_ms("01:00:00.000").unwrap(), 3_600_000);
+        assert!(parse_timestamp_ms("bad").is_err());
+        assert!(parse_timestamp_ms("1:2").is_err());
+    }
 }
