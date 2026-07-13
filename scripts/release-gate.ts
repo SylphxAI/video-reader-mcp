@@ -62,20 +62,7 @@ const readJson = (relativePath: string): unknown =>
 
 export async function buildReleaseGateReport(artifactDir: string): Promise<ReleaseGateReport> {
   const checks: GateCheck[] = [];
-  const pkg = readJson('package.json') as { version: string; bin?: Record<string, string>; dependencies?: Record<string, string> };
-  // Ensure generated corpus video exists for boundary checks that run before ffmpeg-gated keyframe block.
-  const earlyFixtureVideo = path.join(repoRoot, 'test/fixtures/no-subtitle.mp4');
-  if (!fileExists('test/fixtures/no-subtitle.mp4')) {
-    try {
-      execSync(
-        `ffmpeg -hide_banner -y -f lavfi -i color=c=blue:s=160x120:d=2 -c:v libx264 -pix_fmt yuv420p ${earlyFixtureVideo}`,
-        { stdio: 'pipe', timeout: 60_000 }
-      );
-    } catch {
-      // leave missing; later checks will record structured failure
-    }
-  }
-
+  const pkg = readJson('package.json') as { version: string; bin?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
   const manifest = readJson('test/fixtures/corpus-manifest.json') as {
     profile: string;
     cases: Array<{ id: string }>;
@@ -319,6 +306,20 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
       binWrapper.includes('resolve_rust_bin') &&
       binWrapper.includes('use_ts_transport'),
     'Default npm bin launches the Rust rmcp MCP server; TypeScript adapter is opt-in only'
+  );
+
+  const httpTransportSource = readFileSync(
+    path.join(repoRoot, 'crates/video-reader-mcp-server/src/http_transport.rs'),
+    'utf8'
+  );
+  addCheck(
+    checks,
+    'mcp:rust_web_http_transport',
+    httpTransportSource.includes('StreamableHttpService') &&
+      httpTransportSource.includes('/mcp/health') &&
+      binWrapper.includes('resolve_transport') &&
+      binWrapper.includes('MCP_TRANSPORT=http'),
+    'Rust rmcp streamable HTTP Web MCP transport is wired; npm bin routes MCP_TRANSPORT=http to Rust'
   );
 
   const matrixProbe = spawnSync('bun', ['test', 'test/shippedPath.matrix.test.ts'], {

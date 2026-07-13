@@ -1,5 +1,5 @@
 use rmcp::ServiceExt;
-use video_reader_mcp_server::{VideoReaderMcp, SERVER_VERSION};
+use video_reader_mcp_server::{http_transport, VideoReaderMcp, SERVER_VERSION};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -9,6 +9,10 @@ async fn main() -> anyhow::Result<()> {
             video_reader_core::ENGINE_NAME
         );
         return Ok(());
+    }
+
+    if http_transport::transport_from_env().is_some() {
+        return http_transport::serve_http(http_transport::HttpConfig::from_env()).await;
     }
 
     let service = VideoReaderMcp::new().serve(rmcp::transport::stdio()).await?;
