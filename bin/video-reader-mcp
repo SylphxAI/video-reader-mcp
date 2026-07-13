@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TS_ENTRY="$ROOT/dist/index.js"
 
 resolve_rust_bin() {
   if [[ -n "${VIDEO_READER_MCP_RUST_BIN:-}" && -x "${VIDEO_READER_MCP_RUST_BIN}" ]]; then
     printf '%s\n' "${VIDEO_READER_MCP_RUST_BIN}"
     return 0
   fi
+
   for candidate in \
     "$ROOT/bin/native/video-reader-mcp-server" \
     "$ROOT/target/release/video-reader-mcp-server" \
@@ -16,14 +19,15 @@ resolve_rust_bin() {
       return 0
     fi
   done
+
   return 1
 }
 
+use_ts_transport() {
+  [[ "${VIDEO_READER_MCP_TRANSPORT:-}" == "ts" ]] || [[ "${1:-}" == "ts" ]]
+}
+
 resolve_transport() {
-  if [[ -n "${1:-}" && "${1}" != "ts" ]]; then
-    printf '%s\n' "$1"
-    return 0
-  fi
   if [[ -n "${VIDEO_READER_MCP_TRANSPORT:-}" ]]; then
     printf '%s\n' "${VIDEO_READER_MCP_TRANSPORT}"
     return 0
@@ -35,29 +39,28 @@ resolve_transport() {
   printf '%s\n' "stdio"
 }
 
-transport="$(resolve_transport "${1:-}")"
+transport="$(resolve_transport)"
 
-# HTTP always routes to Rust streamable HTTP before any TS path
+# HTTP before any TS path
 if [[ "$transport" == "http" ]]; then
-  if rust_bin="$(resolve_rust_bin)"; then
+  if bin="$(resolve_rust_bin)"; then
     export MCP_TRANSPORT=http
     export VIDEO_READER_MCP_TRANSPORT=http
-    exec "$rust_bin"
+    exec "$bin" "$@"
   fi
   echo "video-reader-mcp: MCP_TRANSPORT=http requires Rust video-reader-mcp-server binary" >&2
   exit 1
 fi
 
-# explicit TS stdio opt-in after HTTP branch
-if [[ "$transport" == "ts" ]] || [[ "${1:-}" == "ts" ]]; then
-  if [[ -f "$ROOT/dist/index.js" ]]; then
-    exec node "$ROOT/dist/index.js"
+if use_ts_transport "$@"; then
+  if [[ "${1:-}" == "ts" ]]; then
+    shift
   fi
-  exec bun "$ROOT/src/index.ts"
+  exec node "$TS_ENTRY" "$@"
 fi
 
-if rust_bin="$(resolve_rust_bin)"; then
-  exec "$rust_bin"
+if bin="$(resolve_rust_bin)"; then
+  exec "$bin" "$@"
 fi
 
 echo "[video-reader-mcp] Rust MCP server (rmcp) is not built. Run: bun run build:rust" >&2
