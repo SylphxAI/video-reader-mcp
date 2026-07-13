@@ -421,4 +421,23 @@ mod tests {
         assert!(warnings.is_empty() || !warnings.iter().any(|w| w.contains("No video")));
     }
 
+
+    #[test]
+    fn bw7_collect_probe_warnings_vfr_and_zero_duration() {
+        use serde_json::json;
+        let streams = vec![json!({
+            "index": 0,
+            "codec_type": "video",
+            "avg_frame_rate": "30/1",
+            "r_frame_rate": "60/1"
+        }), json!({"codec_type":"audio"})];
+        let format = json!({"duration": "0"});
+        let warnings = collect_probe_warnings(&streams, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("variable frame rate")), "{warnings:?}");
+        assert!(warnings.iter().any(|w| w.contains("Duration unavailable") || w.contains("zero")), "{warnings:?}");
+        assert_eq!(seconds_to_ms(Some(&json!(0))), 0);
+        assert_eq!(seconds_to_ms(Some(&json!("0.001"))), 1);
+        assert_eq!(parse_u64(Some(&json!(0))), Some(0));
+    }
+
 }

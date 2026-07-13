@@ -221,4 +221,16 @@ mod tests {
     }
 
 
+
+
+    #[test]
+    fn bw7_parse_crop_missing_fields_matrix() {
+        use serde_json::json;
+        assert!(parse_crop(&json!({"y":0,"width":1,"height":1})).is_err());
+        assert!(parse_crop(&json!({"x":0,"width":1,"height":1})).is_err());
+        assert!(parse_crop(&json!({"x":0,"y":0,"height":1})).is_err());
+        assert!(parse_crop(&json!({"x":0,"y":0,"width":1})).is_err());
+        let ok = parse_crop(&json!({"x":10,"y":20,"width":30,"height":40})).unwrap();
+        assert_eq!((ok.x, ok.y, ok.width, ok.height), (10, 20, 30, 40));
+    }
 }

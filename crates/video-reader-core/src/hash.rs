@@ -117,4 +117,30 @@ mod tests {
         flipped.scene_threshold = 0.2;
         assert_ne!(k1, build_cache_key("src-hash", &flipped));
     }
+
+    #[test]
+    fn bw7_cache_key_dimension_and_defaults_pure() {
+        assert_eq!(default_keyframe_limit(), 8);
+        assert!(default_true());
+        assert!((default_scene_threshold() - 0.4).abs() < f64::EPSILON);
+        let mut opts = CacheOptions {
+            include_streams: true,
+            include_chapters: true,
+            include_subtitles: false,
+            include_scenes: true,
+            include_transcript: false,
+            include_keyframes: false,
+            include_keyframe_images: false,
+            keyframe_limit: 8,
+            keyframe_max_dimension: None,
+            scene_threshold: 0.4,
+        };
+        let base = build_cache_key("h", &opts);
+        opts.keyframe_max_dimension = Some(320);
+        assert_ne!(base, build_cache_key("h", &opts));
+        opts.keyframe_max_dimension = None;
+        opts.include_keyframe_images = true;
+        assert_ne!(base, build_cache_key("h", &opts));
+    }
+
 }

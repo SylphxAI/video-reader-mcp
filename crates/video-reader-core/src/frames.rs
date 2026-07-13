@@ -504,4 +504,27 @@ mod tests {
         assert_eq!(base64_encode(b"foo"), "Zm9v");
     }
 
+
+
+    #[test]
+    fn bw7_parse_keyframe_times_limit_zero_and_bad_tokens() {
+        let stderr = "pts_time:1.0\npts_time:notanumber\npts_time:2.5 extra\n";
+        // Honest contract: limit is checked after push (`len >= limit`), so limit=0
+        // still records the first parsed time then breaks (1 >= 0).
+        assert_eq!(parse_keyframe_times(stderr, 0), vec![1000]);
+        assert_eq!(parse_keyframe_times(stderr, 1), vec![1000]);
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![1000, 2500]);
+        assert_eq!(build_frame_filter(Some(0), None), "scale=iw:ih");
+    }
+
+    #[test]
+    fn bw7_png_dimensions_short_and_base64_pad() {
+        assert_eq!(png_dimensions(&[137, 80, 78, 71]), None);
+        let bad_sig = vec![0u8; 24];
+        assert_eq!(png_dimensions(&bad_sig), None);
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+    }
 }

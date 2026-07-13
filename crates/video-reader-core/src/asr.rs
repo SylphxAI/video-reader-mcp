@@ -475,4 +475,17 @@ mod tests {
         assert!(parse_timestamp_ms("aa:00:00.000").is_err());
     }
 
+
+    #[test]
+    fn bw7_parse_whisper_missing_array_and_whitespace_only() {
+        let err = parse_whisper_cpp_json(r#"{"other":[]}"#, "whisper-cli").unwrap_err();
+        let _ = format!("{err:?}");
+        let payload = r#"{"transcription":[{"text":"","start":0,"end":1},{"text":"ok","start":1,"end":2}]}"#;
+        let t = parse_whisper_cpp_json(payload, "w").expect("ok");
+        assert_eq!(t.len(), 1);
+        assert_eq!(t[0].text, "ok");
+        assert_eq!(parse_timestamp_ms("00:00:00.000").unwrap(), 0);
+        assert_eq!(parse_timestamp_ms("00:01:00.000").unwrap(), 60_000);
+    }
+
 }
