@@ -202,4 +202,23 @@ mod tests {
     fn render_frame_route_constant_is_stable() {
         assert_eq!(crate::frames::RENDER_FRAME_ROUTE, "rust-frame-render");
     }
+
+
+    #[test]
+    fn parse_crop_requires_positive_dims() {
+        use serde_json::json;
+        let crop = parse_crop(&json!({"x":1,"y":2,"width":3,"height":4})).expect("ok");
+        assert_eq!(crop.x, 1);
+        assert_eq!(crop.y, 2);
+        assert_eq!(crop.width, 3);
+        assert_eq!(crop.height, 4);
+        // Current pure residual contract: zero dims are accepted (u64->u32 cast only).
+        // Required fields missing still error.
+        assert!(parse_crop(&json!({"x":0,"y":0,"width":0,"height":1})).is_ok());
+        assert!(parse_crop(&json!({"x":0,"y":0,"width":1})).is_err());
+        assert!(parse_crop(&json!({})).is_err());
+        assert!(parse_crop(&json!({"x":"no","y":0,"width":1,"height":1})).is_err());
+    }
+
+
 }

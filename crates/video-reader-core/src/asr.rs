@@ -448,4 +448,31 @@ mod tests {
         assert!(parse_timestamp_ms("bad").is_err());
         assert!(parse_timestamp_ms("1:2").is_err());
     }
+
+    #[test]
+    fn parses_segments_array_and_skips_empty_text() {
+        let payload = r#"{
+          "segments": [
+            { "start": 0.0, "end": 0.5, "text": "  hi  " },
+            { "start": 0.5, "end": 1.0, "text": "   " },
+            { "offsets": { "from": 1000, "to": 2000 }, "text": "there" }
+          ]
+        }"#;
+        let transcript = parse_whisper_cpp_json(payload, "whisper-cli").expect("parse");
+        assert_eq!(transcript.len(), 2);
+        assert_eq!(transcript[0].text, "hi");
+        assert_eq!(transcript[0].start_ms, 0);
+        assert_eq!(transcript[0].end_ms, 500);
+        assert_eq!(transcript[1].text, "there");
+        assert_eq!(transcript[1].start_ms, 1000);
+        assert_eq!(transcript[1].end_ms, 2000);
+    }
+
+    #[test]
+    fn parse_timestamp_ms_hours_and_invalid() {
+        assert_eq!(parse_timestamp_ms("01:02:03.500").expect("ok"), 3_723_500);
+        assert!(parse_timestamp_ms("1:02").is_err());
+        assert!(parse_timestamp_ms("aa:00:00.000").is_err());
+    }
+
 }

@@ -391,4 +391,34 @@ mod tests {
         assert_eq!(slim.format.duration_ms, 10_000);
         assert_eq!(slim.route, TIMELINE_ROUTE);
     }
+
+    #[test]
+    fn seconds_to_ms_and_parse_u64_edges_bw6() {
+        use serde_json::json;
+        assert_eq!(seconds_to_ms(Some(&json!("1.5"))), 1500);
+        assert_eq!(seconds_to_ms(Some(&json!(2))), 2000);
+        assert_eq!(seconds_to_ms(Some(&json!(2.25))), 2250);
+        assert_eq!(seconds_to_ms(None), 0);
+        assert_eq!(seconds_to_ms(Some(&json!(null))), 0);
+        assert_eq!(parse_u64(Some(&json!(42))), Some(42));
+        assert_eq!(parse_u64(Some(&json!("7"))), Some(7));
+        assert_eq!(parse_u64(Some(&json!("nope"))), None);
+        assert_eq!(parse_u64(None), None);
+    }
+
+    #[test]
+    fn collect_probe_warnings_video_only_and_missing_both() {
+        use serde_json::json;
+        let streams = vec![json!({"codec_type":"video","avg_frame_rate":"0/0","r_frame_rate":"0/0"})];
+        let format = json!({});
+        let warnings = collect_probe_warnings(&streams, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("No audio")));
+        let empty: Vec<serde_json::Value> = vec![];
+        let warnings = collect_probe_warnings(&empty, &format, true);
+        assert!(warnings.iter().any(|w| w.contains("No video")));
+        assert!(warnings.iter().any(|w| w.contains("No audio")));
+        let warnings = collect_probe_warnings(&empty, &format, false);
+        assert!(warnings.is_empty() || !warnings.iter().any(|w| w.contains("No video")));
+    }
+
 }

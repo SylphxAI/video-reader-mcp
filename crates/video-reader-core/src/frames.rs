@@ -451,4 +451,57 @@ mod tests {
         let times = parse_keyframe_times(stderr, 8);
         assert_eq!(times, vec![0, 2000]);
     }
+
+    #[test]
+    fn parse_keyframe_times_and_frame_filter_pure() {
+        let stderr = "n:0 pts_time:0.000\nn:1 pts_time:1.250 foo\nn:2 pts_time:2.5\nbad line\nn:3 pts_time:3.0\n";
+        assert_eq!(parse_keyframe_times(stderr, 2), vec![0, 1250]);
+        assert_eq!(parse_keyframe_times(stderr, 10), vec![0, 1250, 2500, 3000]);
+        assert!(parse_keyframe_times("no times", 5).is_empty());
+        assert_eq!(build_frame_filter(None, None), "scale=iw:ih");
+        assert_eq!(
+            build_frame_filter(Some(320), None),
+            "scale='min(320,iw)':-2"
+        );
+        let crop = CropRegion {
+            x: 1,
+            y: 2,
+            width: 10,
+            height: 20,
+        };
+        assert_eq!(
+            build_frame_filter(None, Some(&crop)),
+            "crop=10:20:1:2,scale=iw:ih"
+        );
+        assert_eq!(
+            build_frame_filter(Some(0), Some(&crop)),
+            "crop=10:20:1:2,scale=iw:ih"
+        );
+        assert_eq!(
+            build_frame_filter(Some(64), Some(&crop)),
+            "crop=10:20:1:2,scale='min(64,iw)':-2"
+        );
+    }
+
+    #[test]
+    fn png_dimensions_and_base64_encode_pure() {
+        // minimal IHDR layout: 8-byte sig + length/type + width/height
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        bytes.extend_from_slice(&[0, 0, 0, 13]); // length
+        bytes.extend_from_slice(b"IHDR");
+        bytes.extend_from_slice(&12u32.to_be_bytes());
+        bytes.extend_from_slice(&8u32.to_be_bytes());
+        // pad to 24+
+        while bytes.len() < 24 {
+            bytes.push(0);
+        }
+        assert_eq!(png_dimensions(&bytes), Some((12, 8)));
+        assert_eq!(png_dimensions(&[]), None);
+        assert_eq!(png_dimensions(&[0u8; 30]), None);
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+    }
+
 }
