@@ -65,7 +65,7 @@ export const createVideoEvidenceHandler = () =>
             ? cropFrameViaRustEngine({
                 videoPath: resolvedPath,
                 timeMs: source.time_ms,
-                crop: source.crop!,
+                crop: source.crop as NonNullable<typeof source.crop>,
                 maxDimension: input.max_dimension,
               })
             : renderFrameViaRustEngine({

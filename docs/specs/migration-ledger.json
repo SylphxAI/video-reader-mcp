@@ -45,11 +45,30 @@
       "id": "transport/web-mcp-http",
       "domain": "transport",
       "weight": 5,
-      "state": "ts_only",
-      "tsSurface": "src/index.ts (MCP_TRANSPORT=http → src/mcp.ts http transport)",
-      "parityTest": "test/shippedPath.matrix.test.ts; bun run benchmark:release-gate",
+      "state": "rust_impl",
+      "tsSurface": "src/index.ts (legacy TS HTTP retired on this branch when VIDEO_READER uses Rust http)",
+      "parityTest": "test/httpTransport.matrix.test.ts; test/check-no-ts-http-backend.test.ts; cargo test -p video-reader-mcp-server",
       "prodProbe": "MCP_TRANSPORT=http npx @sylphx/video-reader-mcp (TS path on main)",
-      "notes": "On origin/main (6efac6e) Rust mcp-server main.rs is stdio-only; crates/video-reader-mcp-server/src/http_transport.rs is ABSENT. Open PR #10 (feat/rust-web-mcp-http-transport) adds Rust Streamable HTTP — not merged; do not claim rust_impl until merge + proof. Fail-closed ts_only."
+      "notes": "PR#10 rebuild: Rust Streamable HTTP on branch; main tip previously stdio-only. Fail-closed rust_impl only (rej-010). Decontaminated denominator retained.",
+      "rustSurface": "crates/video-reader-mcp-server/src/http_transport.rs; crates/video-reader-mcp-server/src/main.rs",
+      "differentialTest": "scripts/run-video-reader-differential.sh (if present); benchmark:release-gate",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: rust_impl only until differential_green at bound SHAs; NO auto-promotion to authority_rust/ts_deleted",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-13T19:27:09Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "crates/video-reader-mcp-server/src/http_transport.rs",
+          "crates/video-reader-mcp-server/src/main.rs",
+          "src/index.ts",
+          "test/httpTransport.matrix.test.ts",
+          "bin/video-reader-mcp"
+        ],
+        "staleReason": "FLEET35 rebuild: HTTP transport code rebased onto decontaminated main; differential_green not yet executed at bound SHAs"
+      }
     },
     {
       "id": "transport/stdio-rust-rmcp",
@@ -145,13 +164,13 @@
   ],
   "summary": {
     "total": 5,
-    "ts_only": 2,
+    "ts_only": 1,
     "contracted": 0,
-    "rust_impl": 3,
+    "rust_impl": 4,
     "parity_proven": 0,
     "authority_rust": 0,
     "ts_deleted": 0,
-    "proof_missing": 3,
+    "proof_missing": 4,
     "completion_progress": 0.0,
     "authority_progress": 0.0,
     "weighted_progress": 0.413,
@@ -169,7 +188,8 @@
       "priorTotal": 6,
       "newTotal": 5,
       "notes": "Denominator drop 6→5 is intentional contamination remediation (pdf-domain tools never existed here). Control-plane sealed baseline must re-seal after product merge — not a silent regression."
-    }
+    },
+    "notes": "FLEET35 PR#10 rebuild: transport/web-mcp-http rust_impl under rej-010; no authority/ts_deleted claims"
   },
   "promotionFreeze": {
     "active": true,
@@ -210,11 +230,14 @@
       "notes": "Default bin launches Rust rmcp stdio when native present; TS opt-in via VIDEO_READER_MCP_TRANSPORT=ts."
     },
     "S3-http-rust": {
-      "status": "not_on_main",
+      "status": "rust_impl_on_branch",
       "evidence": [
-        "https://github.com/SylphxAI/video-reader-mcp/pull/10"
+        "crates/video-reader-mcp-server/src/http_transport.rs",
+        "crates/video-reader-mcp-server/src/main.rs",
+        "test/httpTransport.matrix.test.ts",
+        "scripts/check-no-ts-http-backend.sh"
       ],
-      "notes": "Rust HTTP transport only on open PR #10. Main TS HTTP remains ts_only."
+      "notes": "FLEET35 rebuilt onto decontaminated main; awaiting merge + differential_green"
     }
   }
 }
