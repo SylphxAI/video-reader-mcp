@@ -25,10 +25,12 @@ describe('Web MCP HTTP Rust authority gate', () => {
 
     expect(bin).toContain('resolve_rust_bin');
     expect(bin).toContain('MCP_TRANSPORT=http');
-    expect(bin).toContain('transport="$(resolve_transport)"');
-    expect(bin.indexOf('[[ "$transport" == "http" ]]')).toBeLessThan(
-      bin.indexOf('if use_ts_transport')
-    );
+    expect(bin).toContain('transport="$(resolve_transport');
+    const httpIdx = bin.indexOf('[[ "$transport" == "http" ]]');
+    const tsIdx = bin.indexOf('[[ "$transport" == "ts" ]]');
+    expect(httpIdx).toBeGreaterThanOrEqual(0);
+    expect(tsIdx).toBeGreaterThanOrEqual(0);
+    expect(httpIdx).toBeLessThan(tsIdx);
     expect(httpTransport).toContain('StreamableHttpService');
     expect(httpTransport).toContain('health_check');
   });
