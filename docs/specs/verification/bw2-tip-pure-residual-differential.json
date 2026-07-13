@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "slice": "video-reader-mcp.pure-residual|pure-residual",
   "status": "differential_green",
-  "verifiedAt": "2026-07-13T01:51:41Z",
-  "lastComparedMainSha": "c119e8beaec83629ca2166c9469b88892bd83717",
-  "mergeGroupSha": "c119e8beaec83629ca2166c9469b88892bd83717",
-  "baselineTsSha": "c119e8beaec83629ca2166c9469b88892bd83717",
-  "rustCandidateSha": "c119e8beaec83629ca2166c9469b88892bd83717",
+  "verifiedAt": "2026-07-13T02:06:08Z",
+  "lastComparedMainSha": "a9179cbe2be060d310ae827d4a6e65dab86055b8",
+  "mergeGroupSha": "a9179cbe2be060d310ae827d4a6e65dab86055b8",
+  "baselineTsSha": "a9179cbe2be060d310ae827d4a6e65dab86055b8",
+  "rustCandidateSha": "a9179cbe2be060d310ae827d4a6e65dab86055b8",
   "behaviorSpecHash": "b237f6b4bfad381a939e05740af36b974361ae71f3654ef4642f3e295241b262",
   "fixtureCorpusHash": "b237f6b4bfad381a939e05740af36b974361ae71f3654ef4642f3e295241b262",
   "caseCount": 15,
@@ -29,6 +29,6 @@
     "video_evidence"
   ],
   "promotionPolicy": "NO_PROMOTIONS \u2014 pure residual differential_green only; NOT read_video effect parity; NOT authority_rust; NOT HTTP; NOT ts_deleted; rej-010 hold remains for effect surfaces",
-  "wave": "BW7",
-  "rebindingNote": "BW7 pure residual unit deepen tip rebind; pure-residual differential still green; no effect/parity/authority claim"
+  "wave": "BW8",
+  "rebindingNote": "BW8 pure residual unit deepen tip rebind; pure-residual differential still green; no read_video effect/parity/authority claim"
 }
