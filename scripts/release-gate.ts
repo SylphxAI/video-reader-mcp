@@ -304,8 +304,9 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'mcp:rust_adapter_default',
     binWrapper.includes('video-reader-mcp-server') &&
       binWrapper.includes('resolve_rust_bin') &&
-      binWrapper.includes('use_ts_transport'),
-    'Default npm bin launches the Rust rmcp MCP server; TypeScript adapter is opt-in only'
+      !binWrapper.includes('use_ts_transport') &&
+      !binWrapper.includes('exec node'),
+    'Default npm bin launches the Rust rmcp MCP server exclusively; TypeScript stdio adapter is retired'
   );
 
   const httpTransportSource = readFileSync(

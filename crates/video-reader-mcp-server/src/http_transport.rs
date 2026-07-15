@@ -174,13 +174,12 @@ pub async fn serve_http(config: HttpConfig) -> anyhow::Result<()> {
     let shared_config = Arc::new(config);
     let cancellation = tokio_util::sync::CancellationToken::new();
 
+    // rmcp >=1.8: StreamableHttpServerConfig is #[non_exhaustive] — use Default + builders.
     let mcp_service = StreamableHttpService::new(
         || Ok(VideoReaderMcp::new()),
         LocalSessionManager::default().into(),
-        StreamableHttpServerConfig {
-            cancellation_token: cancellation.child_token(),
-            ..Default::default()
-        },
+        StreamableHttpServerConfig::default()
+            .with_cancellation_token(cancellation.child_token()),
     );
 
     let mcp_router = Router::new()
