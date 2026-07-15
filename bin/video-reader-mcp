@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+# Video Reader MCP launcher — Rust rmcp only (fail-closed, no TS stdio fallback).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TS_ENTRY="$ROOT/dist/index.js"
 
 resolve_rust_bin() {
   if [[ -n "${VIDEO_READER_MCP_RUST_BIN:-}" && -x "${VIDEO_READER_MCP_RUST_BIN}" ]]; then
@@ -23,10 +23,6 @@ resolve_rust_bin() {
   return 1
 }
 
-use_ts_transport() {
-  [[ "${VIDEO_READER_MCP_TRANSPORT:-}" == "ts" ]] || [[ "${1:-}" == "ts" ]]
-}
-
 resolve_transport() {
   if [[ -n "${VIDEO_READER_MCP_TRANSPORT:-}" ]]; then
     printf '%s\n' "${VIDEO_READER_MCP_TRANSPORT}"
@@ -39,27 +35,12 @@ resolve_transport() {
   printf '%s\n' "stdio"
 }
 
-transport="$(resolve_transport)"
-
-# HTTP before any TS path
-if [[ "$transport" == "http" ]]; then
-  if bin="$(resolve_rust_bin)"; then
+if bin="$(resolve_rust_bin)"; then
+  transport="$(resolve_transport)"
+  if [[ "$transport" == "http" ]]; then
     export MCP_TRANSPORT=http
     export VIDEO_READER_MCP_TRANSPORT=http
-    exec "$bin" "$@"
   fi
-  echo "video-reader-mcp: MCP_TRANSPORT=http requires Rust video-reader-mcp-server binary" >&2
-  exit 1
-fi
-
-if use_ts_transport "$@"; then
-  if [[ "${1:-}" == "ts" ]]; then
-    shift
-  fi
-  exec node "$TS_ENTRY" "$@"
-fi
-
-if bin="$(resolve_rust_bin)"; then
   exec "$bin" "$@"
 fi
 

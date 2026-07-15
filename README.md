@@ -161,7 +161,7 @@ npx @sylphx/video-reader-mcp
 ### HTTP transport (optional)
 
 ```bash
-MCP_TRANSPORT=http MCP_HTTP_PORT=8080 node dist/index.js
+MCP_TRANSPORT=http MCP_HTTP_PORT=8080 npx @sylphx/video-reader-mcp
 ```
 
 ## Security model
