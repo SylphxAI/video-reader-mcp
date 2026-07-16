@@ -2,6 +2,11 @@
 
 # 🎬 Video Reader MCP
 
+<p align="center">
+  <img src="docs/banner.png" alt="video-reader-mcp banner" width="100%" />
+</p>
+
+
 ### Your agent watched the video. **Did it read the timeline?**
 
 Evidence-first video reading for AI agents. One call turns any local video into a
