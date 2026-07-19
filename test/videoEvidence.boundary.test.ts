@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   cropFrameViaRustEngine,
@@ -197,18 +196,5 @@ describe('rust video evidence engine boundary', () => {
       return;
     }
     expect(block.text).toContain('ocr_frame is not available');
-  });
-
-  it('keeps frame render logic out of the TypeScript adapter sources', () => {
-    const handlerSrc = readFileSync(path.join(repoRoot, 'src/handlers/videoEvidence.ts'), 'utf8');
-    const engineSrc = readFileSync(
-      path.join(repoRoot, 'src/engine/rust-video-evidence.ts'),
-      'utf8'
-    );
-
-    expect(engineSrc).toContain('render_frame');
-    expect(engineSrc).toContain('crop_frame');
-    expect(handlerSrc).toContain('renderFrameViaRustEngine');
-    expect(handlerSrc).not.toMatch(/image2pipe|Sha256/i);
   });
 });

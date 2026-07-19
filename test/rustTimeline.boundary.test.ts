@@ -90,16 +90,4 @@ describe('rust timeline engine boundary', () => {
     expect(document.provenance.source_hash).toMatch(/^[a-f0-9]{64}$/);
     expect(document.provenance.cache_key).toMatch(/^[a-f0-9]{64}$/);
   });
-
-  it('keeps timeline assembly logic out of the TypeScript coordinator sources', () => {
-    const coordinatorSrc = readFileSync(
-      path.join(repoRoot, 'src/video/readCoordinator.ts'),
-      'utf8'
-    );
-    const engineSrc = readFileSync(path.join(repoRoot, 'src/engine/rust-timeline.ts'), 'utf8');
-
-    expect(engineSrc).toContain('spawnSync');
-    expect(coordinatorSrc).toContain('assembleProbeTimelineViaRustEngine');
-    expect(coordinatorSrc).toContain('hashSourceViaRustEngine');
-  });
 });

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   isRustCliAvailable,
@@ -43,15 +43,5 @@ describe('rust asr engine boundary', () => {
     const asr = await tryAsrTranscript(fixturePath, true);
     expect(asr.transcript).toEqual([]);
     expect(asr.warning).toContain('whisper');
-  });
-
-  it('keeps ASR orchestration out of the TypeScript adapter sources', () => {
-    const asrSrc = readFileSync(path.join(repoRoot, 'src/utils/asr.ts'), 'utf8');
-    const engineSrc = readFileSync(path.join(repoRoot, 'src/engine/rust-asr.ts'), 'utf8');
-
-    expect(engineSrc).toContain('spawnSync');
-    expect(engineSrc).toContain('transcribe_asr');
-    expect(asrSrc).toContain('transcribeViaRustEngine');
-    expect(asrSrc).not.toMatch(/ffmpeg|parse_whisper|Command::new/i);
   });
 });

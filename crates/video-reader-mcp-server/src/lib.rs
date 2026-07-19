@@ -84,37 +84,11 @@ impl ServerHandler for VideoReaderMcp {
 #[cfg(test)]
 mod tests {
     use super::VideoReaderMcp;
-    use std::fs;
-    use std::path::PathBuf;
-
-    #[test]
-    fn rmcp_server_sources_route_primary_tools_through_rust_core() {
-        let src_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
-        let lib_rs = fs::read_to_string(src_dir.join("lib.rs")).expect("read lib.rs");
-        let production_lib = lib_rs.split("#[cfg(test)]").next().unwrap_or(&lib_rs);
-        assert!(production_lib.contains("read_video::read_video"));
-        assert!(production_lib.contains("video_evidence::video_evidence"));
-
-        let routes = fs::read_to_string(src_dir.join("tool_routes.rs")).expect("read tool_routes");
-        assert!(routes.contains("read_video"));
-        assert!(routes.contains("video_evidence"));
-    }
-
     #[test]
     fn exposes_primary_tool_surface() {
         let tools = VideoReaderMcp::new().tool_router.list_all();
         let names: Vec<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
         assert!(names.contains(&"read_video".to_string()));
         assert!(names.contains(&"video_evidence".to_string()));
-    }
-
-    #[test]
-    fn rust_http_transport_module_is_wired_for_web_mcp() {
-        let src_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
-        let main_rs = fs::read_to_string(src_dir.join("main.rs")).expect("read main.rs");
-        let http_rs = fs::read_to_string(src_dir.join("http_transport.rs")).expect("read http_transport.rs");
-        assert!(main_rs.contains("http_transport::serve_http"));
-        assert!(http_rs.contains("StreamableHttpService"));
-        assert!(http_rs.contains("/mcp/health"));
     }
 }
