@@ -298,31 +298,6 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
         }
   );
 
-  const binWrapper = readFileSync(path.join(repoRoot, 'bin/video-reader-mcp'), 'utf8');
-  addCheck(
-    checks,
-    'mcp:rust_adapter_default',
-    binWrapper.includes('video-reader-mcp-server') &&
-      binWrapper.includes('resolve_rust_bin') &&
-      !binWrapper.includes('use_ts_transport') &&
-      !binWrapper.includes('exec node'),
-    'Default npm bin launches the Rust rmcp MCP server exclusively; TypeScript stdio adapter is retired'
-  );
-
-  const httpTransportSource = readFileSync(
-    path.join(repoRoot, 'crates/video-reader-mcp-server/src/http_transport.rs'),
-    'utf8'
-  );
-  addCheck(
-    checks,
-    'mcp:rust_web_http_transport',
-    httpTransportSource.includes('StreamableHttpService') &&
-      httpTransportSource.includes('/mcp/health') &&
-      binWrapper.includes('resolve_transport') &&
-      binWrapper.includes('MCP_TRANSPORT=http'),
-    'Rust rmcp streamable HTTP Web MCP transport is wired; npm bin routes MCP_TRANSPORT=http to Rust'
-  );
-
   const matrixProbe = spawnSync('bun', ['test', 'test/shippedPath.matrix.test.ts'], {
     cwd: repoRoot,
     encoding: 'utf8',

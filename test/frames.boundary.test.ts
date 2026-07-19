@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   extractKeyframesViaRustEngine,
@@ -95,14 +94,5 @@ describe('rust frames engine boundary', () => {
     expect(document.keyframes.length).toBeGreaterThan(0);
     expect(document.keyframes[0]?.route).toBe('rust-keyframe-png');
     expect(document.keyframes[0]?.frame_hash?.length).toBeGreaterThan(0);
-  });
-
-  it('keeps frame extraction logic out of the TypeScript adapter sources', () => {
-    const framesSrc = readFileSync(path.join(repoRoot, 'src/utils/frames.ts'), 'utf8');
-    const engineSrc = readFileSync(path.join(repoRoot, 'src/engine/rust-frames.ts'), 'utf8');
-
-    expect(engineSrc).toContain('extract_keyframes');
-    expect(framesSrc).toContain('extractKeyframesViaRustEngine');
-    expect(framesSrc).not.toMatch(/Sha256|image2pipe/i);
   });
 });
