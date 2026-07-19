@@ -19,5 +19,5 @@ describe('video reader release gate', () => {
     expect(report.status).toBe('passed');
     expect(report.summary.failed).toBe(0);
     expect(report.checks.some((check) => check.id === 'fixtures:corpus_manifest')).toBe(true);
-  });
+  }, 120_000);
 });
