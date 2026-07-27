@@ -9,9 +9,11 @@ on:
 jobs:
   validate:
     name: Validate
-    runs-on: ubuntu-latest
+    runs-on: sylphx-linux-standard
     steps:
       - uses: actions/checkout@v7.0.0
+      - name: Enforce owned CI runner profiles
+        run: python3 .github/scripts/check-owned-runner-profiles.py
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3.12'
