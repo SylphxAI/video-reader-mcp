@@ -1,6 +1,10 @@
 <div align="center">
 
-# 🎬 Video Reader MCP
+# Cue
+
+### Timeline proof for agents *(Sylphx Instruments)*
+
+**Cue** (transitional package `@sylphx/video-reader-mcp`) — local video timeline evidence, not frame-by-frame VLM.
 
 <p align="center">
   <img src="https://mark.sylphx.com/api/v1/banner?type=mesh&theme=tokyonight&text=video+reader+mcp&desc=Evidence-first+video+reading+for+AI+agents+%E2%80%94+ffprobe%2C+subtitles%2C+scenes%2C+transcr&height=200&animation=rise&credit=0" alt="video-reader-mcp — Sylphx Mark banner" width="100%" />
