@@ -64,7 +64,6 @@
     "brand:pack-plan": "bun scripts/brand-pack-plan.ts"
   },
   "dependencies": {
-    "@sylphx/reader-evidence": "github:SylphxAI/reader-evidence",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },

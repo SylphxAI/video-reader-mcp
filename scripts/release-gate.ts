@@ -326,12 +326,12 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
 
   addCheck(
     checks,
-    'contract:reader_evidence_dep',
-    typeof pkg.dependencies?.['@sylphx/reader-evidence'] === 'string' &&
-      (fileExists('node_modules/@sylphx/reader-evidence/src/envelope.ts') ||
-        fileExists('node_modules/@sylphx/reader-evidence/src/index.ts')),
-    'video-reader depends on @sylphx/reader-evidence shared schema package',
-    { dependency: pkg.dependencies?.['@sylphx/reader-evidence'] }
+    'contract:product_local_evidence',
+    !pkg.dependencies?.['@sylphx/reader-evidence'] &&
+      !pkg.devDependencies?.['@sylphx/reader-evidence'] &&
+      fileExists('docs/PRODUCT_INDEPENDENCE.md'),
+    'product owns evidence locally; no archived @sylphx/reader-evidence dependency',
+    { independenceDoc: 'docs/PRODUCT_INDEPENDENCE.md' }
   );
 
   addCheck(
