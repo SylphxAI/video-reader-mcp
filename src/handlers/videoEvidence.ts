@@ -60,10 +60,8 @@ export const createVideoEvidenceHandler = () =>
       }
 
       const results: EvidenceResult[] = [];
-      const ocrLanguages =
-        (input as { ocr_languages?: string[] }).ocr_languages ??
-        (input as { languages?: string[] }).languages ??
-        ['eng'];
+      const ocrLanguages = (input as { ocr_languages?: string[] }).ocr_languages ??
+        (input as { languages?: string[] }).languages ?? ['eng'];
 
       for (const source of input.sources) {
         const resolvedPath = resolvePath(source.path);

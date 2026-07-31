@@ -4,7 +4,7 @@
  */
 import { readVideo } from './handlers/readVideo.js';
 import { videoEvidence } from './handlers/videoEvidence.js';
-import { readVideoArgsSchema, type ReadVideoArgs } from './schemas/readVideo.js';
+import { type ReadVideoArgs, readVideoArgsSchema } from './schemas/readVideo.js';
 
 export type CueReadInput = ReadVideoArgs | { path: string; [key: string]: unknown };
 

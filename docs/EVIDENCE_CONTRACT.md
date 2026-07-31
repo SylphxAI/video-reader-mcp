@@ -1,18 +1,23 @@
-# Evidence contract
+# Evidence contract — product-specific
 
-**Evidence First** means tool **results** carry citeable structure — not a tool named `evidence_first`.
+**Evidence First** means results carry citeable structure. There is **no** MCP tool named `evidence_first`.
 
-## What agents get
+## Locators and honesty for this product
 
-- **Locators**: page / time / bbox / file:line / URL span as applicable
-- **Routes**: which local engine path produced the payload
-- **Warnings**: honesty when OCR/ conf / network / partial parse limits apply
-- **No generative rewrite** as the default authority
+- time_ms / frame indices
+- stream ids from ffprobe
+- subtitle cue times
+- warnings when ffmpeg/ffprobe/asr missing
 
-## What Evidence First is not
+Internal helpers (`hash_source`, `build_cache_key`) support caching; agents should prefer `read_video` first.
 
-- Not a separate MCP tool agents must call
-- Not marketing-only language without locators
-- Not requiring a cloud model to “confirm” local facts
+## Always include when applicable
 
-This product owns its evidence envelope in-repo.
+- **route**: which local engine path produced the payload
+- **warnings**: missing binaries, partial parse, network/adapter limits
+- raw facts over generative rewrite as authority
+
+## Non-goals
+
+- Requiring a cloud model to “confirm” local facts
+- Over-marketing Evidence First without locators on the wire

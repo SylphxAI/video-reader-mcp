@@ -33,11 +33,11 @@ describe('Cue read behavior', () => {
         }[];
       };
       expect(payload.results?.[0]?.success).toBe(true);
-      expect((payload.results?.[0]?.data?.format?.duration_ms ?? 0)).toBeGreaterThan(0);
-      expect((payload.results?.[0]?.data?.streams?.length ?? 0)).toBeGreaterThan(0);
+      expect(payload.results?.[0]?.data?.format?.duration_ms ?? 0).toBeGreaterThan(0);
+      expect(payload.results?.[0]?.data?.streams?.length ?? 0).toBeGreaterThan(0);
       expect(Array.isArray(payload.results?.[0]?.data?.warnings)).toBe(true);
     },
-    60_000,
+    60_000
   );
 
   test('sdk accepts path ergonomics and constructs', () => {

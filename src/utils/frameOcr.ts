@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -29,7 +29,7 @@ export const isTesseractAvailable = (): boolean => {
 /** OCR a PNG buffer (base64) with local Tesseract; honest skip when missing. */
 export const ocrPngBase64 = (
   imageBase64: string,
-  languages: string[] = ['eng'],
+  languages: string[] = ['eng']
 ): FrameOcrResult => {
   const langs = languages.length ? languages : ['eng'];
   if (!isTesseractAvailable()) {
@@ -48,16 +48,12 @@ export const ocrPngBase64 = (
   try {
     writeFileSync(pngPath, Buffer.from(imageBase64, 'base64'));
     const languageArg = langs.join('+');
-    const result = spawnSync(
-      'tesseract',
-      [pngPath, 'stdout', '-l', languageArg, '--psm', '6'],
-      {
-        encoding: 'utf8',
-        timeout: 60_000,
-        windowsHide: true,
-        maxBuffer: 5 * 1024 * 1024,
-      },
-    );
+    const result = spawnSync('tesseract', [pngPath, 'stdout', '-l', languageArg, '--psm', '6'], {
+      encoding: 'utf8',
+      timeout: 60_000,
+      windowsHide: true,
+      maxBuffer: 5 * 1024 * 1024,
+    });
     if (result.error) {
       return {
         available: false,
