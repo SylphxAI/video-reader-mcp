@@ -334,6 +334,13 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     { dependency: pkg.dependencies?.['@sylphx/reader-evidence'] }
   );
 
+  addCheck(
+    checks,
+    'surface:agent_skill',
+    fileExists('skills/cue/SKILL.md'),
+    'Agent skill surface is present at skills/cue/SKILL.md'
+  );
+
   const passed = checks.filter((check) => check.status === 'passed').length;
   const failed = checks.length - passed;
 
