@@ -2,7 +2,7 @@
   "name": "@sylphx/video-reader-mcp",
   "version": "0.1.0",
   "mcpName": "io.github.SylphxAI/video-reader-mcp",
-  "description": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
+  "description": "Cue \u2014 Evidence-first video reading for AI agents \u2014 ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -15,10 +15,13 @@
     "bin/",
     "dist/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "src/"
   ],
   "exports": {
-    ".": "./dist/doctor-cli.js"
+    ".": "./dist/doctor-cli.js",
+    "./sdk": "./src/sdk.ts",
+    "./cue": "./src/sdk.ts"
   },
   "repository": {
     "type": "git",
