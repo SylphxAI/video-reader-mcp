@@ -36,6 +36,13 @@ Each instrument is an independent repository (marketplace + stars).
 ---
 
 
+
+## Read video structure (not N-second frame spam)
+
+Cue is **local-first timeline architecture**: streams, dialogue, scene cuts, **structural keyframes**, and **agent_index** for text-only agents.
+
+Spec: [docs/specs/agent-video-read-contract.md](docs/specs/agent-video-read-contract.md)
+
 ## Product docs
 
 | Doc | Purpose |

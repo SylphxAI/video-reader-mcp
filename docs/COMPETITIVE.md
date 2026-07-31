@@ -25,3 +25,8 @@ Operates on local media with ffmpeg/ffprobe; no required paid video API.
 - Becoming a cloud SaaS wrapper as the default path
 - Multi-product monorepo for star aggregation
 - Generative summaries as the sole evidence authority
+
+## 2026-07-31 research note
+
+See docs/specs/agent-*-read-contract.md for competitive synthesis and product decisions.
+
