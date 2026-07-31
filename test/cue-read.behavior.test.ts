@@ -5,31 +5,42 @@ import { Cue } from '../src/sdk.ts';
 const sample = join(import.meta.dir, 'fixtures/no-subtitle.mp4');
 const hasFfprobe = Bun.which('ffprobe') !== null;
 
+function extractText(result: unknown): string | undefined {
+  if (!result || typeof result !== 'object') return undefined;
+  const r = result as { type?: string; text?: string; content?: { type: string; text?: string }[] };
+  if (r.type === 'text' && typeof r.text === 'string') return r.text;
+  if (Array.isArray(r.content)) {
+    return r.content.find((c) => c.type === 'text')?.text;
+  }
+  if (Array.isArray(result)) {
+    return (result as { type: string; text?: string }[]).find((c) => c.type === 'text')?.text;
+  }
+  return undefined;
+}
+
 describe('Cue read behavior', () => {
   test.skipIf(!hasFfprobe)(
     'reads fixture timeline when ffprobe is available',
     async () => {
       const cue = Cue.create();
       const result = await cue.read({ path: sample });
-      let body: string | undefined;
-      if (result && typeof result === 'object' && 'content' in result) {
-        body = (result as { content?: { type: string; text?: string }[] }).content?.find(
-          (c) => c.type === 'text',
-        )?.text;
-      } else if (Array.isArray(result)) {
-        body = (result as { type: string; text?: string }[]).find((c) => c.type === 'text')?.text;
-      }
+      const body = extractText(result);
       expect(body).toBeTruthy();
-      const twin = JSON.parse(body as string) as Record<string, unknown>;
-      // timeline-ish fields — be flexible on exact schema
-      expect(twin).toBeTruthy();
-      const keys = Object.keys(twin);
-      expect(keys.length).toBeGreaterThan(0);
+      const payload = JSON.parse(body as string) as {
+        results?: {
+          success?: boolean;
+          data?: { format?: { duration_ms?: number }; streams?: unknown[]; warnings?: string[] };
+        }[];
+      };
+      expect(payload.results?.[0]?.success).toBe(true);
+      expect((payload.results?.[0]?.data?.format?.duration_ms ?? 0)).toBeGreaterThan(0);
+      expect((payload.results?.[0]?.data?.streams?.length ?? 0)).toBeGreaterThan(0);
+      expect(Array.isArray(payload.results?.[0]?.data?.warnings)).toBe(true);
     },
     60_000,
   );
 
-  test('sdk constructs without ffprobe', () => {
+  test('sdk accepts path ergonomics and constructs', () => {
     expect(Cue.create()).toBeTruthy();
   });
 });

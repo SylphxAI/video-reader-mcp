@@ -4,24 +4,34 @@
  */
 import { readVideo } from './handlers/readVideo.js';
 import { videoEvidence } from './handlers/videoEvidence.js';
-import { readVideoArgsSchema } from './schemas/readVideo.js';
+import { readVideoArgsSchema, type ReadVideoArgs } from './schemas/readVideo.js';
 
-export type CueReadInput = {
-  path?: string;
-  sources?: unknown;
-  [key: string]: unknown;
-};
+export type CueReadInput = ReadVideoArgs | { path: string; [key: string]: unknown };
 
 export { readVideoArgsSchema };
+
+function normalizeReadInput(input: CueReadInput): ReadVideoArgs {
+  if ('sources' in input && Array.isArray((input as ReadVideoArgs).sources)) {
+    return readVideoArgsSchema.parse(input);
+  }
+  const { path, ...rest } = input as { path: string; [key: string]: unknown };
+  if (!path || typeof path !== 'string') {
+    throw new Error('Cue.read requires sources[] or path');
+  }
+  return readVideoArgsSchema.parse({
+    ...rest,
+    sources: [{ path }],
+  });
+}
 
 export class Cue {
   static create(): Cue {
     return new Cue();
   }
 
-  /** MCP: read_video */
+  /** MCP: read_video — accepts `{ sources:[{path}] }` or ergonomic `{ path }` */
   async read(input: CueReadInput) {
-    const parsed = readVideoArgsSchema.parse(input);
+    const parsed = normalizeReadInput(input);
     return readVideo.handler({ input: parsed, ctx: {} });
   }
 
