@@ -7,13 +7,13 @@
     "url": "https://github.com/SylphxAI/video-reader-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "websiteUrl": "https://github.com/SylphxAI/video-reader-mcp#readme",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@sylphx/video-reader-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       }
