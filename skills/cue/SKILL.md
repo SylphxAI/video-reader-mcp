@@ -13,7 +13,11 @@ cue doctor
 
 ```ts
 import { Cue } from '@sylphx/video-reader-mcp/sdk'
-const timeline = await Cue.create().read({ path: './sample.mp4' })
+const timeline = await Cue.create().read({
+  path: './sample.mp4',
+  include_subtitles: true,
+  include_scenes: true,
+})
 ```
 
 ## Tools
@@ -23,9 +27,18 @@ const timeline = await Cue.create().read({ path: './sample.mp4' })
 | `read_video` | Timeline document via local ffprobe path |
 | `video_evidence` *(optional advanced)* | Frame/OCR paths when enabled |
 
+### Timeline flags
+
+| Flag | Meaning |
+| --- | --- |
+| `include_subtitles` | Extract embedded subtitle cues (`start_ms`/`end_ms`) when ffmpeg available |
+| `include_scenes` | Optional ffmpeg scene boundaries with timestamps |
+| *(chapters)* | Returned from ffprobe when present on the container |
+
 ## Evidence contract
 
-Results include stream/chapter anchors. There is **no** `evidence_first` tool.
+Results include stream/chapter anchors and warnings. There is **no** `evidence_first` tool.
 Full timeline path requires **ffprobe** on PATH; doctor and public-proof report availability honestly.
+Missing ffmpeg → subtitle/scene paths skip with warnings (no invented cues).
 
 Family: https://github.com/SylphxAI/instruments
