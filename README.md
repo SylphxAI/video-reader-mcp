@@ -62,6 +62,14 @@ not a slideshow summary.**
 
 ## See it work
 
+### Install (30 seconds)
+
+```bash
+npm install -g @sylphx/video-reader-mcp
+cue doctor
+claude mcp add cue -- npx @sylphx/video-reader-mcp
+```
+
 **Install once. Call once.**
 
 ```bash
