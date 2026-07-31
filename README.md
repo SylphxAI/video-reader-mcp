@@ -35,6 +35,19 @@ Each instrument is an independent repository (marketplace + stars).
 
 ---
 
+
+## Product docs
+
+| Doc | Purpose |
+| --- | --- |
+| [docs/POSITIONING.md](docs/POSITIONING.md) | Strategic positioning |
+| [docs/COMPETITIVE.md](docs/COMPETITIVE.md) | Peer anchors and wedge |
+| [docs/EVIDENCE_CONTRACT.md](docs/EVIDENCE_CONTRACT.md) | Evidence = result contract |
+| [docs/TOOL_SURFACE.md](docs/TOOL_SURFACE.md) | Few clear tools policy |
+| [docs/PRODUCT_INDEPENDENCE.md](docs/PRODUCT_INDEPENDENCE.md) | This repo is SSOT |
+| [docs/IPPB.md](docs/IPPB.md) | Independent public product bar |
+| [docs/PUBLISH.md](docs/PUBLISH.md) | npm/git publish status |
+
 ## The problem
 
 Videos are not a pile of frames. They are codecs, chapters, embedded subtitles,
