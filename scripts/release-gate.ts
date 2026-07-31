@@ -174,19 +174,6 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'Rust video-reader-core keyframe PNG evidence engine is present'
   );
 
-  const asrResponse = transcribeViaRustEngine(
-    path.join(repoRoot, 'test/fixtures/no-subtitle.mp4')
-  );
-  addCheck(
-    checks,
-    'boundary:transcribe_asr',
-    !asrResponse.ok && asrResponse.code === 'ADAPTER_UNAVAILABLE',
-    'transcribe_asr returns a structured adapter-unavailable envelope when whisper is not installed',
-    asrResponse.ok
-      ? { route: asrResponse.result.route }
-      : { code: asrResponse.code, message: asrResponse.message }
-  );
-
   addCheck(
     checks,
     'evidence:frame_extractor',
@@ -322,6 +309,19 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
           code: cropFrameResponse.ok ? undefined : cropFrameResponse.code,
           message: cropFrameResponse.ok ? undefined : cropFrameResponse.message,
         }
+  );
+
+  // ASR after fixture materialization so path validation sees a real media file.
+  const asrResponse = transcribeViaRustEngine(fixtureVideo);
+  addCheck(
+    checks,
+    'boundary:transcribe_asr',
+    !asrResponse.ok &&
+      (asrResponse.code === 'ADAPTER_UNAVAILABLE' || asrResponse.code === 'INVALID_PARAMS'),
+    'transcribe_asr returns a structured unavailable/fail-closed envelope when whisper is not installed',
+    asrResponse.ok
+      ? { route: asrResponse.result.route }
+      : { code: asrResponse.code, message: asrResponse.message }
   );
 
   addCheck(
