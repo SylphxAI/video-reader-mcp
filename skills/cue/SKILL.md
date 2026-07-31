@@ -23,4 +23,9 @@ const timeline = await Cue.create().read({ path: './sample.mp4' })
 | `read_video` | Timeline document via local ffprobe path |
 | `video_evidence` *(optional advanced)* | Frame/OCR paths when enabled |
 
-Evidence is on results. Family: https://github.com/SylphxAI/instruments
+## Evidence contract
+
+Results include stream/chapter anchors. There is **no** `evidence_first` tool.
+Full timeline path requires **ffprobe** on PATH; doctor and public-proof report availability honestly.
+
+Family: https://github.com/SylphxAI/instruments
