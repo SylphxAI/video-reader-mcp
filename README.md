@@ -28,8 +28,9 @@ SOTA family roadmap: [docs/roadmap/sota-family-roadmap.md](docs/roadmap/sota-fam
 [⭐ Star this repo](https://github.com/SylphxAI/video-reader-mcp) if agents should read video timelines with proof, not sampled frame captions.
 · [Quick start](#quick-start) · [See it work](#see-it-work) · [Why not frame-by-frame vision?](#why-not-frame-by-frame-vision)
 
-Part of the Sylphx Reader portfolio — orchestration and portfolio ADR live in
-[smart-reader-mcp](https://github.com/SylphxAI/smart-reader-mcp).
+Part of **Sylphx Instruments** (company portfolio knowledge, docs only):
+[SylphxAI/instruments](https://github.com/SylphxAI/instruments).
+Each instrument is an independent repository (marketplace + stars).
 
 </div>
 
