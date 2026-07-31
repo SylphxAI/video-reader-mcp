@@ -25,7 +25,7 @@ const timeline = await Cue.create().read({
 | Tool | Job |
 | --- | --- |
 | `read_video` | Timeline document via local ffprobe path |
-| `video_evidence` *(optional advanced)* | Frame/OCR paths when enabled |
+| `video_evidence` *(advanced)* | `render_frame` / `crop_frame` / **`ocr_frame`** (render+tesseract honesty) |
 
 ### Timeline flags
 

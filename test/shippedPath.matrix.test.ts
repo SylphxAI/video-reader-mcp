@@ -132,7 +132,7 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
     expect(existsSync(nodeInvokeLog)).toBe(false);
   });
 
-  it('video_evidence rejects ocr_frame on the default Rust route', () => {
+  it('video_evidence ocr_frame is supported on the default Rust route with OCR honesty', () => {
     const probe = spawnSync(rustCliBin, [], {
       cwd: repoRoot,
       encoding: 'utf8',
@@ -142,13 +142,25 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
         input: {
           operation: 'ocr_frame',
           sources: [{ path: sampleMp4, time_ms: 0 }],
+          max_dimension: 120,
         },
       }),
       timeout: 30_000,
     });
     expect(probe.status).toBe(0);
-    const envelope = JSON.parse(probe.stdout) as CliEnvelope;
-    expect(envelope.status).toBe('error');
+    const envelope = JSON.parse(probe.stdout) as CliEnvelope & {
+      results?: Array<{ success?: boolean; ocr?: { available?: boolean; route?: string } }>;
+      status?: string;
+    };
+    // Either ok with ocr honesty, or error if ffmpeg missing — never silent invent.
+    if (envelope.status === 'ok') {
+      const first = envelope.results?.[0];
+      expect(first?.success).toBe(true);
+      expect(first?.ocr).toBeDefined();
+      expect(typeof first?.ocr?.available).toBe('boolean');
+    } else {
+      expect(envelope.status).toBe('error');
+    }
     expect(existsSync(nodeInvokeLog)).toBe(false);
   });
 

@@ -5,6 +5,7 @@ import {
 } from '../engine/rust-video-evidence.js';
 import { text, tool, toolError } from '../mcp.js';
 import { type VideoEvidenceArgs, videoEvidenceArgsSchema } from '../schemas/videoEvidence.js';
+import { ocrPngBase64 } from '../utils/frameOcr.js';
 import { resolvePath } from '../utils/pathUtils.js';
 
 type EvidenceResult = {
@@ -18,9 +19,17 @@ type EvidenceResult = {
     mime: string;
     width: number;
     height: number;
-    image_base64: string;
+    image_base64?: string;
     provenance: { method: string; time_ms: number };
     crop?: VideoEvidenceArgs['sources'][number]['crop'];
+  };
+  ocr?: {
+    available: boolean;
+    route: string;
+    skipped_reason?: string;
+    languages: string[];
+    lines: { text: string; confidence?: number }[];
+    line_count: number;
   };
   error?: string | undefined;
   code?: string | undefined;
@@ -33,7 +42,7 @@ const routeForOperation = (operation: VideoEvidenceArgs['operation']): string =>
     case 'crop_frame':
       return 'rust-frame-crop';
     case 'ocr_frame':
-      return 'ocr-frame-unavailable';
+      return 'rust-frame-render+tesseract_frame';
   }
 };
 
@@ -44,12 +53,6 @@ export const createVideoEvidenceHandler = () =>
     )
     .input(videoEvidenceArgsSchema)
     .handler(async ({ input }: { input: VideoEvidenceArgs }) => {
-      if (input.operation === 'ocr_frame') {
-        return toolError(
-          'ocr_frame is not available yet. Use render_frame or crop_frame for citeable PNG evidence, or enable read_video include_transcript when a local ASR adapter is installed.'
-        );
-      }
-
       if (!shouldUseRustVideoEvidenceEngine()) {
         return toolError(
           'Rust video evidence engine is unavailable. Build video-reader-cli with cargo build --release or set VIDEO_READER_CLI.'
@@ -57,6 +60,10 @@ export const createVideoEvidenceHandler = () =>
       }
 
       const results: EvidenceResult[] = [];
+      const ocrLanguages =
+        (input as { ocr_languages?: string[] }).ocr_languages ??
+        (input as { languages?: string[] }).languages ??
+        ['eng'];
 
       for (const source of input.sources) {
         const resolvedPath = resolvePath(source.path);
@@ -82,6 +89,36 @@ export const createVideoEvidenceHandler = () =>
             operation: input.operation,
             error: engineResult.message,
             code: engineResult.code,
+          });
+          continue;
+        }
+
+        if (input.operation === 'ocr_frame') {
+          const ocr = ocrPngBase64(engineResult.frame.image_base64, ocrLanguages);
+          results.push({
+            source: source.path,
+            success: true,
+            time_ms: source.time_ms,
+            operation: 'ocr_frame',
+            route: ocr.available
+              ? 'rust-frame-render+tesseract_frame'
+              : 'rust-frame-render+tesseract_unavailable',
+            frame: {
+              frame_hash: engineResult.frame.frame_hash,
+              mime: engineResult.frame.mime,
+              width: engineResult.frame.width,
+              height: engineResult.frame.height,
+              // omit large base64 by default for OCR answers (hash is the locator)
+              provenance: engineResult.frame.provenance,
+            },
+            ocr: {
+              available: ocr.available,
+              route: ocr.route,
+              languages: ocr.languages,
+              lines: ocr.lines,
+              line_count: ocr.line_count,
+              ...(ocr.skipped_reason !== undefined ? { skipped_reason: ocr.skipped_reason } : {}),
+            },
           });
           continue;
         }
