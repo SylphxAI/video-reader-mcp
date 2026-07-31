@@ -205,8 +205,9 @@ describe('rust video evidence engine boundary', () => {
     if ('error' in payload) return;
     expect(payload.operation).toBe('ocr_frame');
     expect(payload.results[0]?.success).toBe(true);
-    expect(payload.results[0]?.ocr).toBeDefined();
-    expect(typeof payload.results[0]?.ocr?.available).toBe('boolean');
-    expect(payload.results[0]?.ocr?.route).toContain('tesseract');
+    const ocr = (payload.results[0] as { ocr?: { available?: boolean; route?: string } }).ocr;
+    expect(ocr).toBeDefined();
+    expect(typeof ocr?.available).toBe('boolean');
+    expect(ocr?.route).toContain('tesseract');
   });
 });

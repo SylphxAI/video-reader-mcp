@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/video-reader-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "mcpName": "io.github.SylphxAI/video-reader-mcp",
   "description": "Cue \u2014 Evidence-first video reading for AI agents \u2014 ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",

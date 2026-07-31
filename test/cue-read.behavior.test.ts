@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
-import { Cue } from '../src/sdk.ts';
+import { Cue } from '../src/sdk.js';
 
 const sample = join(import.meta.dir, 'fixtures/no-subtitle.mp4');
 const hasFfprobe = Bun.which('ffprobe') !== null;
