@@ -78,6 +78,32 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
 
   addCheck(
     checks,
+    'package:cue_brand_bin',
+    typeof pkg.bin?.cue === 'string',
+    'package.json exposes brand bin cue',
+    { bin: pkg.bin?.cue }
+  );
+
+  const serverJson = fileExists('server.json')
+    ? (readJson('server.json') as { title?: string })
+    : null;
+  addCheck(
+    checks,
+    'marketplace:server_json_title_cue',
+    serverJson?.title === 'Cue',
+    'server.json marketplace title is Cue',
+    { title: serverJson?.title }
+  );
+
+  addCheck(
+    checks,
+    'sdk:cue_source',
+    fileExists('src/sdk.ts'),
+    'Cue SDK source is present at src/sdk.ts'
+  );
+
+  addCheck(
+    checks,
     'fixtures:corpus_manifest',
     manifest.profile === 'video_reader_fixture_corpus' && manifest.cases.length >= 5,
     'Fixture corpus manifest documents subtitle, no-subtitle, multi-stream, corrupted, and long-sample cases',
