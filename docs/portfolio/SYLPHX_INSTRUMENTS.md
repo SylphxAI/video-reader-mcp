@@ -1,9 +1,13 @@
-# Sylphx Instruments (pointer)
+# Sylphx Instruments (product family note)
 
-**Cue** — Video timeline evidence.
+This repository is **one independent product** in the Sylphx Instruments family
+(composable positioning at the company level).
 
-Canonical family SSOT:
+It is **not** a monorepo of all instruments. Marketplace listing, releases, and
+stars for this product are owned **here only**.
 
-https://github.com/SylphxAI/architecture-reader-mcp/blob/main/docs/portfolio/sylphx-instruments-ssot.md
+Other instruments live in their own GitHub repositories (Citra/PDF, Iris/image,
+Cue/video, Prism/smart-reader, Spine/architecture, Lookout/web).
 
-Naming: https://github.com/SylphxAI/architecture-reader-mcp/blob/main/docs/adr/ADR-3-sylphx-instruments-naming.md
+Company Instruments knowledge is shared context for agents — not import-work
+hosted inside a sibling product repo.
