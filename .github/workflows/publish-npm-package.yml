@@ -20,40 +20,37 @@ jobs:
         working-directory: .
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           always-auth: true
-
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3.12'
-
-      - name: Install deps (if lockfile)
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install deps
         run: |
           if [ -f bun.lock ] || [ -f bun.lockb ]; then bun install --frozen-lockfile || bun install; fi
-
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_WORKSPACES: 'false'
         run: |
           set -euo pipefail
-          test -n "${NODE_AUTH_TOKEN:-}${NPM_TOKEN:-}"
-          # Ensure auth lands in the userconfig setup-node created.
           TOKEN="${NODE_AUTH_TOKEN:-$NPM_TOKEN}"
+          test -n "$TOKEN"
           npm config set "//registry.npmjs.org/:_authToken" "$TOKEN"
-          npm whoami
+          npm whoami --workspaces=false || npm whoami
           NAME=$(node -p "require('./package.json').name")
           VER=$(node -p "require('./package.json').version")
           echo "Publishing $NAME@$VER from ."
-          if npm view "$NAME@$VER" version >/dev/null 2>&1; then
+          if npm view "$NAME@$VER" version --workspaces=false >/dev/null 2>&1; then
             echo "Already published: $NAME@$VER"
-            npm view "$NAME" version dist-tags
+            npm view "$NAME" version dist-tags --workspaces=false || true
             exit 0
           fi
-          npm publish --access public
-          npm view "$NAME@$VER" version
-          npm view "$NAME" version dist-tags
+          npm publish --access public --workspaces=false
+          npm view "$NAME@$VER" version --workspaces=false
