@@ -9,7 +9,8 @@
   },
   "license": "MIT",
   "bin": {
-    "video-reader-mcp": "./bin/video-reader-mcp"
+    "video-reader-mcp": "./bin/video-reader-mcp",
+    "cue": "./bin/video-reader-mcp"
   },
   "files": [
     "bin/",
