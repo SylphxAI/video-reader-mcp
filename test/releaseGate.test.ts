@@ -16,6 +16,10 @@ describe('video reader release gate', () => {
     );
 
     expect(report.profile).toBe('video_reader_release_gate');
+    if (report.status !== 'passed') {
+      const failed = report.checks.filter((check) => check.status !== 'passed');
+      console.error('release-gate failed checks', JSON.stringify(failed, null, 2));
+    }
     expect(report.status).toBe('passed');
     expect(report.summary.failed).toBe(0);
     expect(report.checks.some((check) => check.id === 'fixtures:corpus_manifest')).toBe(true);
