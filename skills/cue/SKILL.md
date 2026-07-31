@@ -42,4 +42,3 @@ Results include stream/chapter anchors and warnings. There is **no** `evidence_f
 Full timeline path requires **ffprobe** on PATH; doctor and public-proof report availability honestly.
 Missing ffmpeg → subtitle/scene paths skip with warnings (no invented cues).
 
-Family: https://github.com/SylphxAI/instruments

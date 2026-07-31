@@ -2,7 +2,7 @@
 
 # Cue
 
-### Timeline proof for agents *(Sylphx Instruments)*
+### Timeline proof for agents 
 
 **Cue** (transitional package `@sylphx/video-reader-mcp`) — local video timeline evidence, not frame-by-frame VLM.
 
@@ -28,8 +28,7 @@ SOTA family roadmap: [docs/roadmap/sota-family-roadmap.md](docs/roadmap/sota-fam
 [⭐ Star this repo](https://github.com/SylphxAI/video-reader-mcp) if agents should read video timelines with proof, not sampled frame captions.
 · [Quick start](#quick-start) · [See it work](#see-it-work) · [Why not frame-by-frame vision?](#why-not-frame-by-frame-vision)
 
-Part of **Sylphx Instruments** (company portfolio knowledge, docs only):
-[SylphxAI/instruments](https://github.com/SylphxAI/instruments).
+This repository is product SSOT. Sibling agent tools live in separate repos.
 Each instrument is an independent repository (marketplace + stars).
 
 </div>

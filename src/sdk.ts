@@ -1,5 +1,5 @@
 /**
- * Cue SDK — programmatic video timeline API (Sylphx Instruments).
+ * Cue SDK — programmatic video timeline API (Sylphx).
  * Isomorphic with MCP tools `read_video` / `video_evidence`.
  */
 import { readVideo } from './handlers/readVideo.js';
