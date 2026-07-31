@@ -33,6 +33,7 @@ const timeline = await Cue.create().read({
 | --- | --- |
 | `include_subtitles` | Extract embedded subtitle cues (`start_ms`/`end_ms`) when ffmpeg available |
 | `include_scenes` | Optional ffmpeg scene boundaries with timestamps |
+| `include_transcript` | Local ASR when whisper-cli/etc present; honest skip otherwise |
 | *(chapters)* | Returned from ffprobe when present on the container |
 
 ## Evidence contract

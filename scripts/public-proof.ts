@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Cue } from '../src/sdk.ts';
 import { isBinaryAvailable } from '../src/utils/exec.ts';
+import { detectAsrAdapter } from '../src/utils/asr.ts';
 
 function unwrapPayload(result: unknown): Record<string, unknown> {
   if (!result || typeof result !== 'object') return {};
@@ -31,6 +32,7 @@ if (!existsSync(sample)) {
 
 const ffprobe = await isBinaryAvailable('ffprobe');
 const ffmpeg = await isBinaryAvailable('ffmpeg');
+const asrAdapter = await detectAsrAdapter();
 const started = performance.now();
 let ok = false;
 let error: string | undefined;
@@ -86,7 +88,11 @@ const report = {
   honesty: {
     ffprobe: ffprobe ? 'present' : 'absent — full timeline path unavailable',
     ffmpeg: ffmpeg ? 'present' : 'absent — subtitle/scene extraction may skip with warnings',
+    asr: asrAdapter
+      ? `adapter detected: ${asrAdapter} (transcript still honesty-gated)`
+      : 'no local ASR adapter (whisper-cli/whisper-cpp/whisper/vosk-transcriber) — include_transcript skips without invented text',
   },
+  asrAdapter: asrAdapter,
   answerPreviewBytes: answerPreview.length,
   hasSkill: existsSync(join(root, 'skills/cue/SKILL.md')),
   brandPublishDoc: existsSync(join(root, 'docs/BRAND_PUBLISH.md')),
