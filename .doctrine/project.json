@@ -2,9 +2,26 @@
   "schemaVersion": 1,
   "project": {
     "repo": "SylphxAI/video-reader-mcp",
-    "name": "Video Reader MCP",
-    "lifecycle": "bootstrap",
+    "name": "Cue (Video Reader MCP)",
+    "lifecycle": "active",
     "layer": "tooling",
-    "summary": "Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision."
+    "policyPool": "sylphx-skills",
+    "summary": "Local-first video timeline evidence: ffprobe, subtitles, scenes, frames via SDK/CLI/MCP without frame-by-frame LLM vision.",
+    "goals": [
+      "Local timeline proof for agents",
+      "Time-located frame/crop evidence",
+      "SDK/CLI/MCP surfaces"
+    ],
+    "nonGoals": [
+      "YouTube-only transcript wrapper as sole identity",
+      "Required paid video API"
+    ],
+    "links": [
+      {
+        "type": "npm",
+        "url": "https://www.npmjs.com/package/@sylphx/video-reader-mcp",
+        "title": "npm"
+      }
+    ]
   }
 }
