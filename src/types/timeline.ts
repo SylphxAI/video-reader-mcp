@@ -96,6 +96,19 @@ export interface TimelineDocument {
   transcript: TranscriptSegment[];
   keyframes: FrameEvidence[];
   warnings: string[];
+  /** Text outline of film architecture for non-vision agents. */
+  agent_index?: {
+    policy: string;
+    source: string;
+    duration_ms?: number;
+    outline: string;
+    scene_count: number;
+    keyframe_count: number;
+    subtitle_cue_count: number;
+    transcript_segment_count: number;
+    audio_stream_count: number;
+    video_stream_count: number;
+  };
 }
 
 export interface VideoSourceResult {

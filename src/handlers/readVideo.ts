@@ -7,7 +7,7 @@ const MAX_CONCURRENT_SOURCES = 2;
 export const createReadVideoHandler = (version: string) =>
   tool()
     .description(
-      'Primary video reader. Returns a timeline document with ffprobe metadata, embedded subtitles, optional scene boundaries, and warnings — no per-frame vision LLM.'
+      'Primary video reader for agents (read film structure, not sample frames blindly). Timeline: streams, scenes, subtitles, optional ASR, structural keyframe locators, agent_index outline. Local-first; no required vision LLM.'
     )
     .input(readVideoArgsSchema)
     .handler(async ({ input }: { input: ReadVideoArgs }) => {

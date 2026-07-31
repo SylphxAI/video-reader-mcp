@@ -61,6 +61,18 @@ export const readVideoArgsSchema = z.object({
     .positive()
     .optional()
     .describe('Maximum width or height when resizing keyframe PNG evidence.'),
+  keyframe_policy: z
+    .enum(['structural', 'iframes'])
+    .optional()
+    .describe(
+      'structural (default when include_keyframes): scene starts/midpoints. iframes: raw I-frame index only.'
+    ),
+  include_agent_index: z
+    .boolean()
+    .optional()
+    .describe(
+      'Return agent_index outline so text-only agents can read film structure. Defaults to true.'
+    ),
 });
 
 export type ReadVideoArgs = z.infer<typeof readVideoArgsSchema>;

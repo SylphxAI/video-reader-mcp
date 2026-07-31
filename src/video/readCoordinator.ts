@@ -7,6 +7,7 @@ import {
 } from '../engine/rust-timeline.js';
 import type { ReadVideoArgs } from '../schemas/readVideo.js';
 import type { TimelineDocument, VideoSourceResult } from '../types/timeline.js';
+import { buildAgentVideoIndex } from '../utils/agentIndex.js';
 import { tryAsrTranscript } from '../utils/asr.js';
 import { extractSubtitles } from '../utils/ffmpeg.js';
 import {
@@ -20,6 +21,7 @@ import {
 import { extractKeyframes } from '../utils/frames.js';
 import { resolvePath } from '../utils/pathUtils.js';
 import { detectScenes } from '../utils/scenes.js';
+import { planStructuralKeyframeTimes } from '../utils/structuralKeyframes.js';
 
 const DEFAULT_SCENE_THRESHOLD = 0.4;
 const DEFAULT_KEYFRAME_LIMIT = 8;
@@ -109,19 +111,81 @@ export const buildTimelineDocument = async (
   }
 
   let keyframes: TimelineDocument['keyframes'] = [];
+  const keyframePolicy = args.keyframe_policy ?? 'structural';
   if (includeKeyframes) {
-    const extracted = await extractKeyframes(sourcePath, keyframeLimit, {
-      includeImages: includeKeyframeImages,
+    const extracted = await extractKeyframes(sourcePath, Math.max(keyframeLimit, 32), {
+      includeImages: false,
       ...(keyframeMaxDimension !== undefined ? { maxDimension: keyframeMaxDimension } : {}),
     });
-    keyframes = extracted.keyframes;
     if (extracted.warning) warnings.push(extracted.warning);
+
+    if (keyframePolicy === 'iframes') {
+      keyframes = extracted.keyframes.slice(0, keyframeLimit);
+      if (includeKeyframeImages && extracted.keyframes.length > 0) {
+        const withImages = await extractKeyframes(sourcePath, keyframeLimit, {
+          includeImages: true,
+          ...(keyframeMaxDimension !== undefined ? { maxDimension: keyframeMaxDimension } : {}),
+        });
+        keyframes = withImages.keyframes;
+        if (withImages.warning) warnings.push(withImages.warning);
+      }
+    } else {
+      const plan = planStructuralKeyframeTimes({
+        durationMs: format.duration_ms,
+        sceneTimesMs: scenes.map((s) => s.time_ms),
+        iframeTimesMs: extracted.keyframes.map((k) => k.time_ms),
+        limit: keyframeLimit,
+      });
+      warnings.push(...plan.notes);
+      keyframes = plan.times_ms.map((time_ms, index) => {
+        const nearest = extracted.keyframes.reduce<(typeof extracted.keyframes)[number] | null>(
+          (best, kf) => {
+            if (!best) return kf;
+            return Math.abs(kf.time_ms - time_ms) < Math.abs(best.time_ms - time_ms) ? kf : best;
+          },
+          null
+        );
+        return {
+          index,
+          time_ms,
+          provenance: {
+            method: 'ffmpeg_keyframe_select' as const,
+            pict_type: 'I' as const,
+          },
+          ...(nearest?.frame_hash ? { frame_hash: nearest.frame_hash } : {}),
+          ...(nearest?.route ? { route: nearest.route } : {}),
+        };
+      });
+      // Optional images still use iframe extractor for true pixel evidence when requested.
+      if (includeKeyframeImages) {
+        const withImages = await extractKeyframes(sourcePath, keyframeLimit, {
+          includeImages: true,
+          ...(keyframeMaxDimension !== undefined ? { maxDimension: keyframeMaxDimension } : {}),
+        });
+        if (withImages.warning) warnings.push(withImages.warning);
+        // attach images from nearest iframe evidence when hashes/times align
+        keyframes = keyframes.map((kf) => {
+          const hit = withImages.keyframes.find((x) => Math.abs(x.time_ms - kf.time_ms) < 50);
+          if (!hit) return kf;
+          return {
+            ...kf,
+            ...(hit.frame_hash ? { frame_hash: hit.frame_hash } : {}),
+            ...(hit.image_base64 ? { image_base64: hit.image_base64 } : {}),
+            ...(hit.mime ? { mime: hit.mime } : {}),
+            ...(hit.width ? { width: hit.width } : {}),
+            ...(hit.height ? { height: hit.height } : {}),
+            ...(hit.route ? { route: hit.route } : {}),
+          };
+        });
+      }
+    }
   }
 
-  return {
+  const includeAgentIndex = args.include_agent_index ?? true;
+  const documentBase = {
     provenance: {
       source: sourcePath,
-      tool: 'read_video',
+      tool: 'read_video' as const,
       version,
       extracted_at: new Date().toISOString(),
       ...(sourceHash ? { source_hash: sourceHash } : {}),
@@ -136,6 +200,17 @@ export const buildTimelineDocument = async (
     transcript,
     keyframes,
     warnings,
+  };
+
+  return {
+    ...documentBase,
+    ...(includeAgentIndex
+      ? {
+          agent_index: buildAgentVideoIndex(
+            documentBase as Parameters<typeof buildAgentVideoIndex>[0]
+          ),
+        }
+      : {}),
   };
 };
 

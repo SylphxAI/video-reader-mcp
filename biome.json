@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "ignoreUnknown": true,
     "includes": ["src/**/*", "test/**/*", "*.ts", "*.js", "*.json"]
@@ -13,16 +17,52 @@
   },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true, "suspicious": { "noConsole": "off" } }
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noConsole": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 30
+          }
+        }
+      }
+    }
   },
   "javascript": {
-    "formatter": { "quoteStyle": "single", "trailingCommas": "es5", "semicolons": "always" }
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "es5",
+      "semicolons": "always"
+    }
   },
   "overrides": [
     {
       "includes": ["src/utils/scenes.ts"],
       "linter": {
-        "rules": { "suspicious": { "noAssignInExpressions": "off" } }
+        "rules": {
+          "suspicious": {
+            "noAssignInExpressions": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/handlers/videoEvidence.ts",
+        "src/utils/agentIndex.ts",
+        "src/utils/structuralKeyframes.ts",
+        "src/video/readCoordinator.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          }
+        }
       }
     }
   ]
