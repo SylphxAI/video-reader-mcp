@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/video-reader-mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "mcpName": "io.github.SylphxAI/video-reader-mcp",
   "description": "Cue — Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",
@@ -78,9 +78,9 @@
   "packageManager": "bun@1.3.12",
   "private": false,
   "optionalDependencies": {
-    "@sylphx/video-reader-mcp-darwin-arm64": "0.1.5",
-    "@sylphx/video-reader-mcp-darwin-x64": "0.1.5",
-    "@sylphx/video-reader-mcp-linux-x64-gnu": "0.1.5",
-    "@sylphx/video-reader-mcp-linux-arm64-gnu": "0.1.5"
+    "@sylphx/video-reader-mcp-darwin-arm64": "0.1.6",
+    "@sylphx/video-reader-mcp-darwin-x64": "0.1.6",
+    "@sylphx/video-reader-mcp-linux-x64-gnu": "0.1.6",
+    "@sylphx/video-reader-mcp-linux-arm64-gnu": "0.1.6"
   }
 }

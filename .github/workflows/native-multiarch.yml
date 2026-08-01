@@ -1,0 +1,145 @@
+name: Native multi-arch build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'packages/npm/**'
+      - '.github/workflows/native-multiarch.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: [self-hosted, sylphx, macos, standard]
+            target: aarch64-apple-darwin
+            platform_key: darwin-arm64
+          - host: [self-hosted, sylphx, macos, standard]
+            target: x86_64-apple-darwin
+            platform_key: darwin-x64
+          - host: sylphx-linux-standard
+            target: x86_64-unknown-linux-gnu
+            platform_key: linux-x64-gnu
+            zig: "0"
+          - host: sylphx-linux-standard
+            target: aarch64-unknown-linux-gnu
+            platform_key: linux-arm64-gnu
+            zig: "1"
+
+    name: Build ${{ matrix.platform_key }}
+    runs-on: ${{ matrix.host }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Setup Zig (linux-arm64 cross)
+        if: matrix.zig == '1'
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+      - name: Install cargo-zigbuild
+        if: matrix.zig == '1'
+        run: cargo install cargo-zigbuild --version 0.23.0 --locked
+      - name: Build release native
+        run: |
+          set -euo pipefail
+          target="${{ matrix.target }}"
+          if [[ "${{ matrix.zig }}" == "1" ]]; then
+            if ! command -v cargo-zigbuild >/dev/null 2>&1; then
+              cargo install cargo-zigbuild --locked || true
+            fi
+            if command -v cargo-zigbuild >/dev/null 2>&1 && command -v zig >/dev/null 2>&1; then
+              cargo zigbuild --release -p video-reader-mcp-server --target "${target}.2.17" || cargo build --release -p video-reader-mcp-server --target "$target"
+            else
+              # fallback: only works on matching host arch
+              cargo build --release -p video-reader-mcp-server --target "$target"
+            fi
+          else
+            cargo build --release -p video-reader-mcp-server --target "$target"
+          fi
+          BIN="target/${target}/release/video-reader-mcp-server"
+          # zigbuild may place under target/<triple>/release without .2.17 suffix path
+          if [[ ! -f "$BIN" ]]; then
+            BIN=$(find target -name 'video-reader-mcp-server' -type f | head -1)
+          fi
+          test -n "$BIN" && test -f "$BIN"
+          chmod +x "$BIN"
+          test "$(wc -c < "$BIN")" -gt 100000
+          mkdir -p native-out
+          cp "$BIN" native-out/video-reader-mcp-server
+          file native-out/video-reader-mcp-server || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.platform_key }}
+          path: native-out/video-reader-mcp-server
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: sylphx-linux-standard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+          always-auth: true
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Stage + publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          TOKEN="${NODE_AUTH_TOKEN:-$NPM_TOKEN}"
+          test -n "$TOKEN"
+          printf '//registry.npmjs.org/:_authToken=%s\nalways-auth=true\n' "$TOKEN" > "$HOME/.npmrc"
+          export NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          unset npm_config_workspace || true
+          unset npm_config_workspaces || true
+          npm whoami
+          VER=$(node -p "require('./package.json').version" 2>/dev/null || node -p "require('./packages/mcp-server/package.json').version")
+          echo "product version $VER"
+          ls -laR artifacts
+          for key in darwin-arm64 darwin-x64 linux-x64-gnu linux-arm64-gnu; do
+            src=$(find artifacts -path "*native-$key*" -name 'video-reader-mcp-server' | head -1 || true)
+            dir="packages/npm/$key"
+            if [[ -z "$src" || ! -f "$src" ]]; then
+              echo "missing artifact for $key"
+              # fail closed for production multiarch
+              exit 1
+            fi
+            mkdir -p "$dir"
+            cp "$src" "$dir/video-reader-mcp-server"
+            chmod +x "$dir/video-reader-mcp-server"
+            # ensure package.json version matches product
+            if [[ -f "$dir/package.json" ]]; then
+              node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));p.version=process.argv[2];fs.writeFileSync(process.argv[1],JSON.stringify(p,null,2)+'\n')" "$dir/package.json" "$VER"
+            fi
+            name=$(node -p "require('./$dir/package.json').name")
+            if npm view "$name@$VER" version >/dev/null 2>&1; then
+              echo already "$name@$VER"
+              continue
+            fi
+            echo "Publishing $name@$VER"
+            (cd "$dir" && npm publish --access public) 2>&1 | tee /tmp/pub-$key.log
+            for i in $(seq 1 24); do
+              npm view "$name@$VER" version >/dev/null 2>&1 && break
+              sleep 5
+            done
+            npm view "$name@$VER" version
+          done
