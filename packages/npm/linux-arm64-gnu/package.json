@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/video-reader-mcp-linux-arm64-gnu",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Cue (video-reader-mcp) native MCP server binary for linux-arm64-gnu",
   "os": [
     "linux"
