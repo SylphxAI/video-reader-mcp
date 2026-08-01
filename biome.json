@@ -54,6 +54,7 @@
       "includes": [
         "src/handlers/videoEvidence.ts",
         "src/utils/agentIndex.ts",
+        "src/utils/asr.ts",
         "src/utils/structuralKeyframes.ts",
         "src/video/readCoordinator.ts"
       ],

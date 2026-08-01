@@ -43,6 +43,8 @@ Cue is **local-first timeline architecture**: streams, dialogue, scene cuts, **s
 
 Spec: [docs/specs/agent-video-read-contract.md](docs/specs/agent-video-read-contract.md)
 
+**Local-first frontier:** ffmpeg/ffprobe + structural keyframes, optional local whisper ASR. No cloud required.
+
 ## Product docs
 
 | Doc | Purpose |
