@@ -1,0 +1,61 @@
+name: Publish platform natives
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type PUBLISH'
+        required: true
+        type: string
+      platforms:
+        description: 'Comma platforms under packages/npm (default: all with binary present)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: ${{ inputs.confirm == 'PUBLISH' }}
+    runs-on: sylphx-linux-standard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+      - name: Publish platform packages with present binaries
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PLATFORMS_INPUT: ${{ inputs.platforms }}
+        run: |
+          set -euo pipefail
+          TOKEN="${NODE_AUTH_TOKEN:-$NPM_TOKEN}"
+          test -n "$TOKEN"
+          printf '//registry.npmjs.org/:_authToken=%s\nalways-auth=true\n' "$TOKEN" > "$HOME/.npmrc"
+          export NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          npm whoami
+          mapfile -t dirs < <(find packages/npm -mindepth 1 -maxdepth 1 -type d | sort)
+          for dir in "${dirs[@]}"; do
+            name=$(node -p "require('./'+'$dir'+'/package.json').name")
+            ver=$(node -p "require('./'+'$dir'+'/package.json').version")
+            bin=$(ls -1 "$dir"/*-server "$dir"/*-mcp-server 2>/dev/null | head -1 || true)
+            if [ -z "$bin" ] || [ ! -s "$bin" ]; then
+              echo "skip $name (no binary)"
+              continue
+            fi
+            if [ -n "${PLATFORMS_INPUT:-}" ]; then
+              base=$(basename "$dir")
+              echo ",${PLATFORMS_INPUT}," | grep -q ",${base}," || { echo "skip $base not in filter"; continue; }
+            fi
+            if npm view "$name@$ver" version >/dev/null 2>&1; then
+              echo already "$name@$ver"
+              continue
+            fi
+            echo "Publishing $name@$ver from $dir"
+            (cd "$dir" && npm publish --access public)
+            npm view "$name@$ver" version
+          done

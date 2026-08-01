@@ -1,0 +1,17 @@
+{
+  "name": "@sylphx/video-reader-mcp-linux-arm64-gnu",
+  "version": "0.1.4",
+  "description": "Cue (video-reader-mcp) native MCP server binary for linux-arm64-gnu",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "libc": ["glibc"],
+  "files": ["video-reader-mcp-server"],
+  "license": "MIT",
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SylphxAI/video-reader-mcp.git",
+    "directory": "packages/npm/linux-arm64-gnu"
+  },
+  "engines": { "node": ">=22.13.0" }
+}

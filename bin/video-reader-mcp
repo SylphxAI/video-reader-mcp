@@ -1,48 +1,119 @@
 #!/usr/bin/env bash
-# Video Reader MCP launcher — Rust rmcp only (fail-closed, no TS stdio fallback).
+# Cue MCP launcher — Rust rmcp only (fail-closed).
+# Resolves native via optionalDependencies, staged bin/native, or cargo target.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PACKAGE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+host_platform_key() {
+	local os arch
+	os="$(uname -s 2>/dev/null || echo unknown)"
+	arch="$(uname -m 2>/dev/null || echo unknown)"
+	case "$os" in
+		Darwin) os="darwin" ;;
+		Linux) os="linux" ;;
+		*) os="$(printf '%s' "$os" | tr '[:upper:]' '[:lower:]')" ;;
+	esac
+	case "$arch" in
+		x86_64|amd64) arch="x64" ;;
+		aarch64|arm64) arch="arm64" ;;
+	esac
+	printf '%s-%s\n' "$os" "$arch"
+}
+
+platform_package_name() {
+	case "$(host_platform_key)" in
+		darwin-arm64) printf '%s\n' '@sylphx/video-reader-mcp-darwin-arm64' ;;
+		darwin-x64) printf '%s\n' '@sylphx/video-reader-mcp-darwin-x64' ;;
+		linux-x64) printf '%s\n' '@sylphx/video-reader-mcp-linux-x64-gnu' ;;
+		linux-arm64) printf '%s\n' '@sylphx/video-reader-mcp-linux-arm64-gnu' ;;
+		*) return 1 ;;
+	esac
+}
+
+is_runnable_native() {
+	local candidate="$1"
+	[[ -n "$candidate" && -f "$candidate" && -x "$candidate" ]] || return 1
+	return 0
+}
+
+resolve_from_optional_dep() {
+	local pkg_name candidate
+	pkg_name="$(platform_package_name 2>/dev/null || true)"
+	[[ -n "$pkg_name" ]] || return 1
+	local search_roots=(
+		"$PACKAGE_ROOT/node_modules"
+		"$PACKAGE_ROOT/../node_modules"
+		"$PACKAGE_ROOT/../../node_modules"
+	)
+	for root in "${search_roots[@]}"; do
+		candidate="$root/$pkg_name/video-reader-mcp-server"
+		if is_runnable_native "$candidate"; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+	if command -v node >/dev/null 2>&1; then
+		candidate="$(
+			node -e "
+        try {
+          const p = require('node:path');
+          const { createRequire } = require('node:module');
+          const r = createRequire(p.join(process.argv[1], 'package.json'));
+          const pkg = r.resolve(process.argv[2] + '/package.json');
+          process.stdout.write(p.join(p.dirname(pkg), 'video-reader-mcp-server'));
+        } catch { process.exit(1); }
+      " "$PACKAGE_ROOT" "$pkg_name" 2>/dev/null || true
+		)"
+		if is_runnable_native "${candidate:-}"; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	fi
+	return 1
+}
 
 resolve_rust_bin() {
-  if [[ -n "${VIDEO_READER_MCP_RUST_BIN:-}" && -x "${VIDEO_READER_MCP_RUST_BIN}" ]]; then
-    printf '%s\n' "${VIDEO_READER_MCP_RUST_BIN}"
-    return 0
-  fi
-
-  for candidate in \
-    "$ROOT/bin/native/video-reader-mcp-server" \
-    "$ROOT/target/release/video-reader-mcp-server" \
-    "$ROOT/target/debug/video-reader-mcp-server"; do
-    if [[ -x "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-
-  return 1
+	if [[ -n "${VIDEO_READER_MCP_RUST_BIN:-}" && -x "${VIDEO_READER_MCP_RUST_BIN}" ]]; then
+		printf '%s\n' "${VIDEO_READER_MCP_RUST_BIN}"
+		return 0
+	fi
+	if bin="$(resolve_from_optional_dep)"; then
+		printf '%s\n' "$bin"
+		return 0
+	fi
+	for candidate in \
+		"$PACKAGE_ROOT/bin/native/video-reader-mcp-server" \
+		"$PACKAGE_ROOT/target/release/video-reader-mcp-server" \
+		"$PACKAGE_ROOT/target/debug/video-reader-mcp-server"; do
+		if is_runnable_native "$candidate"; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+	return 1
 }
 
 resolve_transport() {
-  if [[ -n "${VIDEO_READER_MCP_TRANSPORT:-}" ]]; then
-    printf '%s\n' "${VIDEO_READER_MCP_TRANSPORT}"
-    return 0
-  fi
-  if [[ -n "${MCP_TRANSPORT:-}" ]]; then
-    printf '%s\n' "${MCP_TRANSPORT}"
-    return 0
-  fi
-  printf '%s\n' "stdio"
+	if [[ -n "${VIDEO_READER_MCP_TRANSPORT:-}" ]]; then
+		printf '%s\n' "${VIDEO_READER_MCP_TRANSPORT}"
+		return 0
+	fi
+	if [[ -n "${MCP_TRANSPORT:-}" ]]; then
+		printf '%s\n' "${MCP_TRANSPORT}"
+		return 0
+	fi
+	printf '%s\n' "stdio"
 }
 
 if bin="$(resolve_rust_bin)"; then
-  transport="$(resolve_transport)"
-  if [[ "$transport" == "http" ]]; then
-    export MCP_TRANSPORT=http
-    export VIDEO_READER_MCP_TRANSPORT=http
-  fi
-  exec "$bin" "$@"
+	transport="$(resolve_transport)"
+	if [[ "$transport" == "http" ]]; then
+		export MCP_TRANSPORT=http
+		export VIDEO_READER_MCP_TRANSPORT=http
+	fi
+	exec "$bin" "$@"
 fi
 
-echo "[video-reader-mcp] Rust MCP server (rmcp) is not built. Run: bun run build:rust" >&2
+echo "[cue] Rust MCP server not found. Install matching optional native package or run: bun run build:rust" >&2
 exit 1
