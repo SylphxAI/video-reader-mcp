@@ -30,10 +30,10 @@ jobs:
             target: x86_64-unknown-linux-gnu
             platform_key: linux-x64-gnu
             zig: "0"
-          - host: sylphx-linux-standard
+          - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             platform_key: linux-arm64-gnu
-            zig: "1"
+            zig: "0"
 
     name: Build ${{ matrix.platform_key }}
     runs-on: ${{ matrix.host }}
@@ -87,7 +87,7 @@ jobs:
 
   publish:
     needs: build
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !cancelled() && needs.build.result != 'cancelled'
     runs-on: sylphx-linux-standard
     steps:
       - uses: actions/checkout@v4
