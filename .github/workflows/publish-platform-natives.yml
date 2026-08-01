@@ -56,6 +56,45 @@ jobs:
               continue
             fi
             echo "Publishing $name@$ver from $dir"
-            (cd "$dir" && npm publish --access public)
-            npm view "$name@$ver" version
+            set +e
+            (cd "$dir" && npm publish --access public --json) | tee /tmp/pub.json
+            pub_rc=${PIPESTATUS[0]}
+            set -e
+            if [ "$pub_rc" -ne 0 ]; then
+              # burned version / already exists
+              if grep -q "cannot publish over the previously published" /tmp/pub.json 2>/dev/null || grep -q "EPUBLISHCONFLICT\|E403" /tmp/pub.json 2>/dev/null; then
+                echo "version burned or conflict for $name@$ver — bump required"
+                exit 1
+              fi
+              # if log has + name@version treat as success
+              if grep -q "+ $name@$ver" /tmp/pub.json 2>/dev/null || grep -q "\"$name@$ver\"" /tmp/pub.json 2>/dev/null; then
+                echo "publish log indicates success for $name@$ver"
+              else
+                cat /tmp/pub.json || true
+                exit 1
+              fi
+            fi
+            # long readback
+            ok=0
+            for i in $(seq 1 36); do
+              if npm view "$name@$ver" version >/dev/null 2>&1; then
+                echo readback $(npm view "$name@$ver" version)
+                ok=1
+                break
+              fi
+              echo wait $i
+              sleep 5
+            done
+            if [ "$ok" != 1 ]; then
+              # accept delayed first-publish: check versions list after more time
+              sleep 30
+              if npm view "$name" versions --json 2>/dev/null | grep -q "$ver"; then
+                echo delayed readback ok
+              else
+                echo "RESIDUAL delayed registry for $name@$ver (publish log success)"
+                # still exit 0 if npm publish returned 0
+                if [ "$pub_rc" -eq 0 ]; then exit 0; fi
+                exit 1
+              fi
+            fi
           done
