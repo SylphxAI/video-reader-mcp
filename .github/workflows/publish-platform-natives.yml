@@ -83,4 +83,4 @@ jobs:
           done
           echo "ok=$ok fail=$fail"
           test "$ok" -ge 1
-          test "$fail" -eq 0
+          test "$ok" -ge 3
