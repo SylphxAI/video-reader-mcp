@@ -42,3 +42,14 @@ read_video { ..., "include_transcript": true }
 3. Few tools; primary path documented in TOOL_SURFACE.md  
 4. Cloud / LLM only optional and non-authority  
 5. Product SSOT is this repository only (no instruments monorepo)
+
+## Composition: Iris L2 on structural keyframes
+
+Cue owns **timeline structure** (probe, scenes, structural keyframes, subtitles).
+Open-vocab objects / masks / captions belong to **Iris L2 semantics**:
+
+1. `read_video` with structural keyframes  
+2. For each keyframe path, agent calls Iris `read_image` with `include_semantics: true`  
+3. Merge by timestamp locator — do not run per-frame VLM inside Cue  
+
+See Iris `docs/adr/ADR-20260802-iris-l2-local-semantics.md`.
