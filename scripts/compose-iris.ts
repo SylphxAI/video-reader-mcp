@@ -90,6 +90,7 @@ export async function composeKeyframes(input: {
   prompt?: string;
   semantics?: (request: { path: string; mime: string; url: string; prompt?: string }) => Promise<IrisSidecarResponse>;
   render?: (videoPath: string, timeMs: number, outPath: string) => Promise<void>;
+  out?: string;
 }): Promise<ComposedIrisResult> {
   const limit = input.limit ?? DEFAULT_LIMIT;
   const plan = planStructuralKeyframeTimes({
