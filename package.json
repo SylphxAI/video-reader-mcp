@@ -2,7 +2,7 @@
   "name": "@sylphx/video-reader-mcp",
   "version": "0.1.7",
   "mcpName": "io.github.SylphxAI/video-reader-mcp",
-  "description": "Cue — Evidence-first video reading for AI agents — ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
+  "description": "Cue \u2014 Evidence-first video reading for AI agents \u2014 ffprobe, subtitles, scenes, transcripts, and timelines without frame-by-frame LLM vision.",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -61,7 +61,8 @@
     "doctor": "bun run src/doctor-cli.ts",
     "benchmark:release-gate": "bun scripts/release-gate.ts",
     "benchmark:public-proof": "bun scripts/public-proof.ts",
-    "brand:pack-plan": "bun scripts/brand-pack-plan.ts"
+    "brand:pack-plan": "bun scripts/brand-pack-plan.ts",
+    "compose:iris": "bun scripts/compose-iris.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

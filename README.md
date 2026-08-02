@@ -45,6 +45,8 @@ Spec: [docs/specs/agent-video-read-contract.md](docs/specs/agent-video-read-cont
 
 **Local-first frontier:** ffmpeg/ffprobe + structural keyframes, optional local whisper ASR. No cloud required.
 
+Docs: [Cue→Iris semantic timeline](docs/compose-iris.md) — structural keyframes become timestamped objects via Iris L2.
+
 ## Product docs
 
 | Doc | Purpose |

@@ -53,3 +53,10 @@ Open-vocab objects / masks / captions belong to **Iris L2 semantics**:
 3. Merge by timestamp locator — do not run per-frame VLM inside Cue  
 
 See Iris `docs/adr/ADR-20260802-iris-l2-local-semantics.md`.
+
+
+### Compose: Cue → Iris semantic timeline
+
+`bun run compose:iris -- /abs/clip.mp4` renders structural keyframes and queries
+Iris L2 (`include_semantics`) per keyframe, emitting timestamped objects.
+Structure stays in Cue; semantics stays in Iris. See [compose-iris.md](./compose-iris.md).
