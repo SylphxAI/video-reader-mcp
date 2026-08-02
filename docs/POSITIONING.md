@@ -38,3 +38,11 @@ See [COMPETITIVE.md](./COMPETITIVE.md).
 ## Completion bar
 
 See [IPPB.md](./IPPB.md).
+
+
+## 2026-08 — timeline + per-scene semantics
+
+Cue stays the **local timeline evidence** tool (ffprobe/scenes/subtitles/structural
+keyframes). Via the Cue→Iris compose path (`bun run compose:iris`), structural
+keyframes become **timestamped open-vocab objects** from Iris L2
+(`include_semantics`) — no per-frame VLM. Structure in Cue, semantics in Iris.
