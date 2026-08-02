@@ -3,19 +3,29 @@ import { composeKeyframes, type IrisSidecarResponse } from '../scripts/compose-i
 
 describe('Cue → Iris compose (boundary, mock semantics)', () => {
   test('merges structural keyframes with Iris L2 objects by time', async () => {
-    const mkSemantics = () => async (
-      req: { path: string; mime: string; url: string; prompt?: string }
-    ): Promise<IrisSidecarResponse> => {
-      const timeFromPath = Number.parseInt(req.path.match(/frame_(\d+)/)?.[1] ?? '0', 10);
-      return {
-        model: 'florence2-mock',
-        caption: `frame ${timeFromPath}`,
-        objects: [
-          { id: 'o1', label: 'person', bbox: { x: 10, y: 20, width: 30, height: 40 }, score: 0.91 },
-          { id: 'o2', label: 'dog', bbox: { x: 50, y: 60, width: 25, height: 20 }, score: 0.8 },
-        ],
+    const mkSemantics =
+      () =>
+      async (req: {
+        path: string;
+        mime: string;
+        url: string;
+        prompt?: string;
+      }): Promise<IrisSidecarResponse> => {
+        const timeFromPath = Number.parseInt(req.path.match(/frame_(\d+)/)?.[1] ?? '0', 10);
+        return {
+          model: 'florence2-mock',
+          caption: `frame ${timeFromPath}`,
+          objects: [
+            {
+              id: 'o1',
+              label: 'person',
+              bbox: { x: 10, y: 20, width: 30, height: 40 },
+              score: 0.91,
+            },
+            { id: 'o2', label: 'dog', bbox: { x: 50, y: 60, width: 25, height: 20 }, score: 0.8 },
+          ],
+        };
       };
-    };
     const render = async () => {};
 
     const result = await composeKeyframes({
