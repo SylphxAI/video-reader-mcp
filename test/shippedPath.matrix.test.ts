@@ -22,7 +22,10 @@ type CliEnvelope = {
   code?: string;
   message?: string;
   engine?: string;
-  route?: string;
+  route?: string | { engine?: string; path?: string };
+  domain_route?: string;
+  envelope_version?: string;
+  product?: string;
   source_hash?: string;
   timeline?: { route?: string; streams?: unknown[] };
   results?: Array<{
@@ -122,7 +125,14 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
       fakeNodeEnv
     );
     expect(envelope.status).toBe('ok');
-    expect(envelope.route).toBe('rust-read-video-v1');
+    const routePath =
+      typeof envelope.route === 'string'
+        ? envelope.route
+        : ((envelope.route as { path?: string } | undefined)?.path ??
+          (envelope as { domain_route?: string }).domain_route);
+    expect(routePath).toBe('rust-read-video-v1');
+    expect((envelope as { envelope_version?: string }).envelope_version).toBe('1');
+    expect((envelope as { product?: string }).product).toBe('cue');
     expect(envelope.results?.[0]?.success).toBe(true);
     expect(envelope.results?.[0]?.timeline?.provenance?.assembly_route).toBe('rust-timeline');
     expect(envelope.results?.[0]?.timeline?.provenance?.source_hash?.length).toBe(64);

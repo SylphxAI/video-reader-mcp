@@ -1,6 +1,7 @@
 pub mod http_transport;
 pub mod read_video;
 pub mod tool_routes;
+mod family_envelope;
 pub mod video_evidence;
 
 use rmcp::{
