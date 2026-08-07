@@ -7,7 +7,7 @@ use crate::read_video::{ReadVideoResponse, VideoSourceResult};
 use crate::{ENGINE_NAME, READ_VIDEO_ROUTE};
 
 pub const READER_EVIDENCE_CONTRACT_VERSION: &str = "reader-evidence-v1";
-pub const PACKAGE_NAME: &str = "@sylphx/video-reader-mcp";
+pub const PACKAGE_NAME: &str = "@sylphx/cue";
 pub const TOOL_NAME: &str = "read_video";
 pub const READER_CONTRACT_VERSION: &str = "0.1.0";
 

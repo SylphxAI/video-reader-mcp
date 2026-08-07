@@ -62,7 +62,8 @@ const readJson = (relativePath: string): unknown =>
 
 export async function buildReleaseGateReport(artifactDir: string): Promise<ReleaseGateReport> {
   const checks: GateCheck[] = [];
-  const pkg = readJson('package.json') as { version: string; bin?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const pkg = readJson('package.json') as { version: string; name?: string;
+    bin?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
   const manifest = readJson('test/fixtures/corpus-manifest.json') as {
     profile: string;
     cases: Array<{ id: string }>;
@@ -73,7 +74,7 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     'package:read_video_bin',
     typeof pkg.bin?.cue === 'string',
     'package.json exposes the brand-sole cue bin entry',
-    { bin: pkg.bin?.cue, name: pkg.name }
+    { bin: pkg.bin?.cue }
   );
 
   addCheck(
