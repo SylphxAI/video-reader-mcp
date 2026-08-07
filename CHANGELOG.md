@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0
+
+### Breaking
+
+- Brand-sole `@sylphx/cue` (bin `cue`).
+- Public MCP tools only: `read_video`, `video_evidence` (internal helpers removed from tools/list).
+- Family envelope v1; Prism retired.
+
+
 ## 0.1.0
 
 ### Minor Changes

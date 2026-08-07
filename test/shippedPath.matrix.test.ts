@@ -127,7 +127,7 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
     expect(envelope.results?.[0]?.timeline?.provenance?.assembly_route).toBe('rust-timeline');
     expect(envelope.results?.[0]?.timeline?.provenance?.source_hash?.length).toBe(64);
     expect(envelope.envelope?.delegation?.delegated_tool).toBe('read_video');
-    expect(envelope.envelope?.delegation?.reader_package).toBe('@sylphx/video-reader-mcp');
+    expect(envelope.envelope?.delegation?.reader_package).toBe('@sylphx/cue');
     expect(envelope.envelope?.sourceHash?.length).toBe(64);
     expect(existsSync(nodeInvokeLog)).toBe(false);
   });

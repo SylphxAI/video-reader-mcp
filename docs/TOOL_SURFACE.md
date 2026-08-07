@@ -1,22 +1,19 @@
 # Tool surface — Cue
 
-Policy: **few, powerful, obvious** tools. Prefer the primary read tool first.
-
-## Primary (matches Rust rmcp surface)
+## Public MCP tools only
 
 | Tool | Role |
 | --- | --- |
 | `read_video` | Timeline document: ffprobe, subtitles, structural scenes/keyframes, agent_index |
-| `video_evidence` | Follow-up: `render_frame` / `crop_frame` / `ocr_frame` with timestamp locators |
+| `video_evidence` | Follow-up ops via `op`: `render_frame` \| `crop_frame` \| `ocr_frame` |
 
-## Not separate top-level tools
+## Not in tools/list
 
-Operations like render/crop/ocr frame are **ops inside `video_evidence`**, not extra MCP tool names. That keeps agent schemas small.
+`hash_source`, `build_cache_key`, `assemble_probe_timeline`, bare `render_frame`/`crop_frame` — internal core only.
 
 ## Rules
 
-1. Always `read_video` first; then `video_evidence` for citeable frames.
+1. Always `read_video` first.
 2. Structural keyframes only — not N-second grid spam.
-3. ASR via local whisper-cli is optional (`include_transcript`).
-4. No cloud vision/ASR required for success.
-5. Composition with Iris/Prism via public contracts only.
+3. No cloud vision/ASR required for success.
+4. Prism retired — host composes Cue with Iris when needed.

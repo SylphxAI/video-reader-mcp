@@ -2,9 +2,11 @@
 
 # Cue
 
-### Timeline proof for agents 
+### Timeline proof for agents
 
-**Cue** (transitional package `@sylphx/video-reader-mcp`) — local video timeline evidence, not frame-by-frame VLM.
+Canonical package: **`@sylphx/cue`** · bin **`cue`** · public tools: `read_video`, `video_evidence` only. 
+
+**Cue** (canonical package `@sylphx/cue`) — local video timeline evidence, not frame-by-frame VLM.
 
 <p align="center">
   <img src="https://mark.sylphx.com/api/v1/banner?type=mesh&theme=tokyonight&text=video+reader+mcp&desc=Evidence-first+video+reading+for+AI+agents+%E2%80%94+ffprobe%2C+subtitles%2C+scenes%2C+transcr&height=200&animation=rise&credit=0" alt="video-reader-mcp — Sylphx Mark banner" width="100%" />
@@ -16,7 +18,7 @@ Evidence-first video reading for AI agents. One call turns any local video into 
 **timeline document** — ffprobe streams, chapters, embedded subtitles, scene
 boundaries, and warnings you can cite without frame-by-frame vision LLM calls.
 
-[![npm version](https://img.shields.io/npm/v/@sylphx/video-reader-mcp?style=flat-square)](https://www.npmjs.com/package/@sylphx/video-reader-mcp)
+[![npm version](https://img.shields.io/npm/v/@sylphx/cue?style=flat-square)](https://www.npmjs.com/package/@sylphx/cue)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
 [![CI/CD](https://img.shields.io/github/actions/workflow/status/SylphxAI/video-reader-mcp/ci.yml?style=flat-square&label=CI/CD)](https://github.com/SylphxAI/video-reader-mcp/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue.svg?style=flat-square)](https://www.typescriptlang.org/)
@@ -88,15 +90,15 @@ not a slideshow summary.**
 ### Install (30 seconds)
 
 ```bash
-npm install -g @sylphx/video-reader-mcp
+npm install -g @sylphx/cue
 cue doctor
-claude mcp add cue -- npx @sylphx/video-reader-mcp
+claude mcp add cue -- npx @sylphx/cue
 ```
 
 **Install once. Call once.**
 
 ```bash
-claude mcp add video-reader -- npx @sylphx/video-reader-mcp
+claude mcp add video-reader -- npx @sylphx/cue
 ```
 
 ```json
@@ -174,7 +176,7 @@ Supported formats: MP4, M4V, MKV, MOV, WebM, and other formats ffprobe can inspe
 ### Claude Code
 
 ```bash
-claude mcp add video-reader -- npx @sylphx/video-reader-mcp
+claude mcp add video-reader -- npx @sylphx/cue
 ```
 
 ### Claude Desktop
@@ -186,7 +188,7 @@ Add this to `claude_desktop_config.json`:
   "mcpServers": {
     "video-reader": {
       "command": "npx",
-      "args": ["@sylphx/video-reader-mcp"]
+      "args": ["@sylphx/cue"]
     }
   }
 }
@@ -195,13 +197,13 @@ Add this to `claude_desktop_config.json`:
 ### Any MCP Client
 
 ```bash
-npx @sylphx/video-reader-mcp
+npx @sylphx/cue
 ```
 
 ### HTTP transport (optional)
 
 ```bash
-MCP_TRANSPORT=http MCP_HTTP_PORT=8080 npx @sylphx/video-reader-mcp
+MCP_TRANSPORT=http MCP_HTTP_PORT=8080 npx @sylphx/cue
 ```
 
 ## Security model
@@ -248,7 +250,7 @@ when available on the runner.
 ## Support
 
 - [Issues](https://github.com/SylphxAI/video-reader-mcp/issues)
-- [npm package](https://www.npmjs.com/package/@sylphx/video-reader-mcp)
+- [npm package](https://www.npmjs.com/package/@sylphx/cue)
 - Portfolio orchestration: [smart-reader-mcp](https://github.com/SylphxAI/smart-reader-mcp)
 
 ## Help this reach more builders
