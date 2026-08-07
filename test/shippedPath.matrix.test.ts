@@ -128,8 +128,8 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
     const routePath =
       typeof envelope.route === 'string'
         ? envelope.route
-        : (envelope.route as { path?: string } | undefined)?.path ??
-          (envelope as { domain_route?: string }).domain_route;
+        : ((envelope.route as { path?: string } | undefined)?.path ??
+          (envelope as { domain_route?: string }).domain_route);
     expect(routePath).toBe('rust-read-video-v1');
     expect((envelope as { envelope_version?: string }).envelope_version).toBe('1');
     expect((envelope as { product?: string }).product).toBe('cue');
