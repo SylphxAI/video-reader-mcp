@@ -183,9 +183,9 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
   });
 
   it('default bin resolves staged rmcp server', () => {
-    const bin = path.join(repoRoot, 'bin/video-reader-mcp');
+    const bin = path.join(repoRoot, 'bin/cue');
     expect(existsSync(bin)).toBe(true);
-    const staged = path.join(repoRoot, 'bin/native/video-reader-mcp-server');
+    const staged = path.join(repoRoot, 'bin/native/cue-mcp-server');
     expect(existsSync(staged)).toBe(true);
   });
 });

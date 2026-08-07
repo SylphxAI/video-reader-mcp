@@ -9,7 +9,7 @@ description = "Rust-native MCP server for video-reader-mcp (rmcp)"
 path = "src/lib.rs"
 
 [[bin]]
-name = "video-reader-mcp-server"
+name = "cue-mcp-server"
 path = "src/main.rs"
 
 [dependencies]

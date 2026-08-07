@@ -23,10 +23,10 @@ host_platform_key() {
 
 platform_package_name() {
 	case "$(host_platform_key)" in
-		darwin-arm64) printf '%s\n' '@sylphx/video-reader-mcp-darwin-arm64' ;;
-		darwin-x64) printf '%s\n' '@sylphx/video-reader-mcp-darwin-x64' ;;
-		linux-x64) printf '%s\n' '@sylphx/video-reader-mcp-linux-x64-gnu' ;;
-		linux-arm64) printf '%s\n' '@sylphx/video-reader-mcp-linux-arm64-gnu' ;;
+		darwin-arm64) printf '%s\n' '@sylphx/cue-darwin-arm64' ;;
+		darwin-x64) printf '%s\n' '@sylphx/cue-darwin-x64' ;;
+		linux-x64) printf '%s\n' '@sylphx/cue-linux-x64-gnu' ;;
+		linux-arm64) printf '%s\n' '@sylphx/cue-linux-arm64-gnu' ;;
 		*) return 1 ;;
 	esac
 }
@@ -47,7 +47,7 @@ resolve_from_optional_dep() {
 		"$PACKAGE_ROOT/../../node_modules"
 	)
 	for root in "${search_roots[@]}"; do
-		candidate="$root/$pkg_name/video-reader-mcp-server"
+		candidate="$root/$pkg_name/cue-mcp-server"
 		if is_runnable_native "$candidate"; then
 			printf '%s\n' "$candidate"
 			return 0
@@ -61,7 +61,7 @@ resolve_from_optional_dep() {
           const { createRequire } = require('node:module');
           const r = createRequire(p.join(process.argv[1], 'package.json'));
           const pkg = r.resolve(process.argv[2] + '/package.json');
-          process.stdout.write(p.join(p.dirname(pkg), 'video-reader-mcp-server'));
+          process.stdout.write(p.join(p.dirname(pkg), 'cue-mcp-server'));
         } catch { process.exit(1); }
       " "$PACKAGE_ROOT" "$pkg_name" 2>/dev/null || true
 		)"
@@ -74,8 +74,8 @@ resolve_from_optional_dep() {
 }
 
 resolve_rust_bin() {
-	if [[ -n "${VIDEO_READER_MCP_RUST_BIN:-}" && -x "${VIDEO_READER_MCP_RUST_BIN}" ]]; then
-		printf '%s\n' "${VIDEO_READER_MCP_RUST_BIN}"
+	if [[ -n "${CUE_RUST_BIN:-}" && -x "${CUE_RUST_BIN}" ]]; then
+		printf '%s\n' "${CUE_RUST_BIN}"
 		return 0
 	fi
 	if bin="$(resolve_from_optional_dep)"; then
@@ -83,9 +83,9 @@ resolve_rust_bin() {
 		return 0
 	fi
 	for candidate in \
-		"$PACKAGE_ROOT/bin/native/video-reader-mcp-server" \
-		"$PACKAGE_ROOT/target/release/video-reader-mcp-server" \
-		"$PACKAGE_ROOT/target/debug/video-reader-mcp-server"; do
+		"$PACKAGE_ROOT/bin/native/cue-mcp-server" \
+		"$PACKAGE_ROOT/target/release/cue-mcp-server" \
+		"$PACKAGE_ROOT/target/debug/cue-mcp-server"; do
 		if is_runnable_native "$candidate"; then
 			printf '%s\n' "$candidate"
 			return 0
