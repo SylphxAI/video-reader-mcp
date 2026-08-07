@@ -24,8 +24,8 @@ impl FreeformToolArgs {
     }
 }
 
-pub const SERVER_NAME: &str = "video-reader-mcp";
-pub const SERVER_VERSION: &str = "0.1.0";
+pub const SERVER_NAME: &str = "cue";
+pub const SERVER_VERSION: &str = "0.2.0";
 pub const SERVER_INSTRUCTIONS: &str =
     "Evidence-first video reader MCP server (Rust rmcp transport). Use read_video for ffprobe timelines and video_evidence for render_frame or crop_frame follow-ups without per-frame vision LLM.";
 
@@ -73,7 +73,7 @@ impl ServerHandler for VideoReaderMcp {
             .with_server_info(
                 Implementation::new(SERVER_NAME, SERVER_VERSION)
                     .with_description(
-                        "Rust-native MCP server for video-reader-mcp (modelcontextprotocol/rust-sdk rmcp)",
+                        "Rust-native MCP server for Cue (@sylphx/cue) (modelcontextprotocol/rust-sdk rmcp)",
                     )
                     .with_website_url("https://github.com/SylphxAI/video-reader-mcp"),
             )

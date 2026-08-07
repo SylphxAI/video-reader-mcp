@@ -1,19 +1,19 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.SylphxAI/video-reader-mcp",
+  "name": "io.github.SylphxAI/cue",
   "title": "Cue",
-  "description": "Cue — local-first video timeline evidence for agents (ffprobe, subtitles, scenes). SDK · CLI · MCP. by Sylphx.",
+  "description": "Cue — local-first video timeline evidence for agents. SDK · CLI · MCP.",
   "repository": {
     "url": "https://github.com/SylphxAI/video-reader-mcp",
     "source": "github"
   },
-  "version": "0.1.5",
+  "version": "0.2.0",
   "websiteUrl": "https://github.com/SylphxAI/video-reader-mcp#readme",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "@sylphx/video-reader-mcp",
-      "version": "0.1.5",
+      "identifier": "@sylphx/cue",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       }
