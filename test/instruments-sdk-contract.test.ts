@@ -5,24 +5,25 @@ import { join } from 'node:path';
 const root = join(import.meta.dir, '..');
 
 describe('Cue Instruments product contract', () => {
-  test('sdk source and package exports/bin brand alias exist', () => {
-    expect(existsSync(join(root, 'src/sdk.ts'))).toBe(true);
+  test('brand-sole package and bin', () => {
     const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
-      exports?: Record<string, string>;
+      name?: string;
       bin?: Record<string, string>;
+      exports?: Record<string, string>;
     };
-    expect(pkg.exports?.['./sdk']).toBeTruthy();
-    expect(pkg.exports?.['./cue']).toBeTruthy();
+    expect(pkg.name).toBe('@sylphx/cue');
     expect(pkg.bin?.cue).toBeTruthy();
-    const sdk = readFileSync(join(root, 'src/sdk.ts'), 'utf8');
-    expect(sdk).toContain('export class Cue');
-    expect(sdk).toContain('read_video');
+    expect(pkg.exports?.['./sdk']).toBeTruthy();
   });
 
   test('marketplace server.json brands as Cue', () => {
     const server = JSON.parse(readFileSync(join(root, 'server.json'), 'utf8')) as {
       title?: string;
+      name?: string;
+      packages?: { identifier?: string }[];
     };
     expect(server.title).toBe('Cue');
+    expect(server.name).toBe('io.github.SylphxAI/cue');
+    expect(server.packages?.[0]?.identifier).toBe('@sylphx/cue');
   });
 });

@@ -71,9 +71,9 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
   addCheck(
     checks,
     'package:read_video_bin',
-    typeof pkg.bin?.['video-reader-mcp'] === 'string',
-    'package.json exposes the video-reader-mcp bin entry',
-    { bin: pkg.bin?.['video-reader-mcp'] }
+    typeof pkg.bin?.cue === 'string',
+    'package.json exposes the brand-sole cue bin entry',
+    { bin: pkg.bin?.cue, name: pkg.name }
   );
 
   addCheck(
