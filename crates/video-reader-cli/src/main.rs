@@ -68,17 +68,44 @@ struct FrameRenderSuccessEnvelope {
 
 #[derive(Debug, serde::Serialize)]
 struct ReadVideoSuccessEnvelope {
+    envelope_version: &'static str,
+    product: &'static str,
+    product_version: &'static str,
     status: &'static str,
+    tool: &'static str,
+    #[serde(rename = "route")]
+    family_route: FamilyRoute,
+    #[serde(default)]
+    gaps: Vec<String>,
+    #[serde(default)]
+    warnings: Vec<String>,
     engine: &'static str,
     version: &'static str,
-    route: &'static str,
+    #[serde(rename = "domain_route")]
+    domain_route: &'static str,
     results: Vec<video_reader_core::read_video::VideoSourceResult>,
     envelope: Option<video_reader_core::AgentEvidenceEnvelope>,
 }
 
 #[derive(Debug, serde::Serialize)]
+struct FamilyRoute {
+    engine: &'static str,
+    path: String,
+}
+
+#[derive(Debug, serde::Serialize)]
 struct VideoEvidenceSuccessEnvelope {
+    envelope_version: &'static str,
+    product: &'static str,
+    product_version: &'static str,
     status: &'static str,
+    tool: &'static str,
+    #[serde(rename = "route")]
+    family_route: FamilyRoute,
+    #[serde(default)]
+    gaps: Vec<String>,
+    #[serde(default)]
+    warnings: Vec<String>,
     engine: &'static str,
     version: &'static str,
     results: Vec<video_reader_core::video_evidence::VideoEvidenceSourceResult>,
@@ -452,10 +479,20 @@ fn main() {
     let output = match request.tool.as_str() {
         "read_video" => match read_video_from_value(&request.input) {
             Ok(response) => serde_json::to_string(&ReadVideoSuccessEnvelope {
+                envelope_version: "1",
+                product: "cue",
+                product_version: env!("CARGO_PKG_VERSION"),
                 status: "ok",
+                tool: "read_video",
+                family_route: FamilyRoute {
+                    engine: "rust-core",
+                    path: READ_VIDEO_ROUTE.to_string(),
+                },
+                gaps: vec![],
+                warnings: vec![],
                 engine: ENGINE_NAME,
                 version: ENGINE_VERSION,
-                route: READ_VIDEO_ROUTE,
+                domain_route: READ_VIDEO_ROUTE,
                 results: response.results,
                 envelope: response.envelope,
             })
@@ -470,7 +507,17 @@ fn main() {
         },
         "video_evidence" => match video_evidence_from_value(&request.input) {
             Ok(response) => serde_json::to_string(&VideoEvidenceSuccessEnvelope {
+                envelope_version: "1",
+                product: "cue",
+                product_version: env!("CARGO_PKG_VERSION"),
                 status: "ok",
+                tool: "video_evidence",
+                family_route: FamilyRoute {
+                    engine: "rust-core",
+                    path: "video_evidence".to_string(),
+                },
+                gaps: vec![],
+                warnings: vec![],
                 engine: ENGINE_NAME,
                 version: ENGINE_VERSION,
                 results: response.results,
