@@ -98,7 +98,6 @@ claude mcp add cue -- npx @sylphx/cue
 **Install once. Call once.**
 
 ```bash
-claude mcp add video-reader -- npx @sylphx/cue
 ```
 
 ```json
@@ -176,7 +175,6 @@ Supported formats: MP4, M4V, MKV, MOV, WebM, and other formats ffprobe can inspe
 ### Claude Code
 
 ```bash
-claude mcp add video-reader -- npx @sylphx/cue
 ```
 
 ### Claude Desktop
@@ -186,7 +184,7 @@ Add this to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "video-reader": {
+    "cue": {
       "command": "npx",
       "args": ["@sylphx/cue"]
     }
