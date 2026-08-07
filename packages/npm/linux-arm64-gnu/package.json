@@ -1,7 +1,7 @@
 {
-  "name": "@sylphx/video-reader-mcp-linux-arm64-gnu",
-  "version": "0.1.7",
-  "description": "Cue (video-reader-mcp) native MCP server binary for linux-arm64-gnu",
+  "name": "@sylphx/cue-linux-arm64-gnu",
+  "version": "0.2.0",
+  "description": "Cue native MCP server binary for linux-arm64-gnu",
   "os": [
     "linux"
   ],
@@ -12,7 +12,7 @@
     "glibc"
   ],
   "files": [
-    "video-reader-mcp-server"
+    "cue-mcp-server"
   ],
   "license": "MIT",
   "publishConfig": {

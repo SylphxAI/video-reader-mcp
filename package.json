@@ -2,18 +2,17 @@
   "name": "@sylphx/cue",
   "version": "0.2.0",
   "mcpName": "io.github.SylphxAI/cue",
-  "description": "Cue — timeline proof for agents. Local video evidence (ffprobe, subtitles, scenes) via MCP/CLI/SDK. Not frame-by-frame VLM.",
+  "description": "Cue \u2014 timeline proof for agents. Local video evidence (ffprobe, subtitles, scenes) via MCP/CLI/SDK. Not frame-by-frame VLM.",
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "license": "MIT",
   "bin": {
-    "cue": "./bin/video-reader-mcp",
-    "video-reader-mcp": "./bin/video-reader-mcp"
+    "cue": "./bin/cue"
   },
   "files": [
-    "bin/video-reader-mcp",
+    "bin/cue",
     "dist/",
     "README.md",
     "LICENSE",
@@ -53,7 +52,7 @@
     "check:fix": "biome check --write .",
     "sync:server-json": "bun scripts/sync-server-json.ts",
     "version-packages": "changeset version && bun run sync:server-json",
-    "start": "./bin/video-reader-mcp",
+    "start": "./bin/cue",
     "clean": "rm -rf dist coverage",
     "prepublishOnly": "bun run clean && bun run build && bun run build:rust",
     "release": "bun run typecheck && bun run check && bun run build && bun test && changeset publish",
@@ -78,9 +77,9 @@
   "packageManager": "bun@1.3.12",
   "private": false,
   "optionalDependencies": {
-    "@sylphx/video-reader-mcp-darwin-arm64": "0.2.0",
-    "@sylphx/video-reader-mcp-darwin-x64": "0.2.0",
-    "@sylphx/video-reader-mcp-linux-x64-gnu": "0.2.0",
-    "@sylphx/video-reader-mcp-linux-arm64-gnu": "0.2.0"
+    "@sylphx/cue-darwin-arm64": "0.2.0",
+    "@sylphx/cue-darwin-x64": "0.2.0",
+    "@sylphx/cue-linux-x64-gnu": "0.2.0",
+    "@sylphx/cue-linux-arm64-gnu": "0.2.0"
   }
 }
