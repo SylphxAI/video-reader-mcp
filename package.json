@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/cue",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.SylphxAI/cue",
   "description": "Cue \u2014 timeline proof for agents. Local video evidence (ffprobe, subtitles, scenes) via MCP/CLI/SDK. Not frame-by-frame VLM.",
   "type": "module",
@@ -77,9 +77,9 @@
   "packageManager": "bun@1.3.12",
   "private": false,
   "optionalDependencies": {
-    "@sylphx/cue-darwin-arm64": "0.2.0",
-    "@sylphx/cue-darwin-x64": "0.2.0",
-    "@sylphx/cue-linux-x64-gnu": "0.2.0",
-    "@sylphx/cue-linux-arm64-gnu": "0.2.0"
+    "@sylphx/cue-darwin-arm64": "0.2.1",
+    "@sylphx/cue-darwin-x64": "0.2.1",
+    "@sylphx/cue-linux-x64-gnu": "0.2.1",
+    "@sylphx/cue-linux-arm64-gnu": "0.2.1"
   }
 }

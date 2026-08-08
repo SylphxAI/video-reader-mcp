@@ -26,7 +26,7 @@ impl FreeformToolArgs {
 }
 
 pub const SERVER_NAME: &str = "cue";
-pub const SERVER_VERSION: &str = "0.2.0";
+pub const SERVER_VERSION: &str = "0.2.1";
 pub const SERVER_INSTRUCTIONS: &str =
     "Evidence-first video reader MCP server (Rust rmcp transport). Use read_video for ffprobe timelines and video_evidence for render_frame or crop_frame follow-ups without per-frame vision LLM.";
 
@@ -92,4 +92,18 @@ mod tests {
         assert!(names.contains(&"read_video".to_string()));
         assert!(names.contains(&"video_evidence".to_string()));
     }
+
+    #[test]
+    fn server_info_is_brand_sole_cue() {
+        use rmcp::ServerHandler;
+        use super::{SERVER_NAME, SERVER_VERSION};
+        let info = VideoReaderMcp::new().get_info();
+        let name = info.server_info.name.to_string();
+        let version = info.server_info.version.to_string();
+        assert_eq!(name, SERVER_NAME);
+        assert_eq!(version, SERVER_VERSION);
+        assert_eq!(SERVER_NAME, "cue");
+        assert!(!name.contains("video-reader"));
+    }
+
 }

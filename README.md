@@ -1,3 +1,9 @@
+## Zero-config
+
+```bash
+npx -y @sylphx/cue
+```
+
 <div align="center">
 
 # Cue

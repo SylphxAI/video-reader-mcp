@@ -5,7 +5,7 @@ use video_reader_mcp_server::{http_transport, VideoReaderMcp, SERVER_VERSION};
 async fn main() -> anyhow::Result<()> {
     if std::env::args().nth(1).as_deref() == Some("doctor") {
         eprintln!(
-            "video-reader-mcp Rust MCP server {SERVER_VERSION} ({})",
+            "Cue Rust MCP server {SERVER_VERSION} ({})",
             video_reader_core::ENGINE_NAME
         );
         return Ok(());
