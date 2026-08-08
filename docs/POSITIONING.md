@@ -46,3 +46,11 @@ Cue stays the **local timeline evidence** tool (ffprobe/scenes/subtitles/structu
 keyframes). Via the Cue→Iris compose path (`bun run compose:iris`), structural
 keyframes become **timestamped open-vocab objects** from Iris L2
 (`include_semantics`) — no per-frame VLM. Structure in Cue, semantics in Iris.
+
+## Zero-config CTA
+
+```bash
+npx -y @sylphx/cue
+```
+
+Live **@sylphx/cue@0.2.1**. Bare MCP stdio for agents.

@@ -30,3 +30,11 @@ Operates on local media with ffmpeg/ffprobe; no required paid video API.
 
 See docs/specs/agent-*-read-contract.md for competitive synthesis and product decisions.
 
+
+## Zero-config CTA
+
+```bash
+npx -y @sylphx/cue
+```
+
+Live **@sylphx/cue@0.2.1**. Bare MCP stdio for agents.

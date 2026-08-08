@@ -60,3 +60,11 @@ See Iris `docs/adr/ADR-20260802-iris-l2-local-semantics.md`.
 `bun run compose:iris -- /abs/clip.mp4` renders structural keyframes and queries
 Iris L2 (`include_semantics`) per keyframe, emitting timestamped objects.
 Structure stays in Cue; semantics stays in Iris. See [compose-iris.md](./compose-iris.md).
+
+## Zero-config CTA
+
+```bash
+npx -y @sylphx/cue
+```
+
+Live **@sylphx/cue@0.2.1**. Bare MCP stdio for agents.

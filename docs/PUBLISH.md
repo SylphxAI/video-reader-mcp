@@ -10,3 +10,11 @@
 ```bash
 npm i -g @sylphx/cue
 ```
+
+## Zero-config CTA
+
+```bash
+npx -y @sylphx/cue
+```
+
+Live **@sylphx/cue@0.2.1**. Bare MCP stdio for agents.
