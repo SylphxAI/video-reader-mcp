@@ -198,21 +198,21 @@ pub async fn serve_http(config: HttpConfig) -> anyhow::Result<()> {
     let app = Router::new().nest("/mcp", mcp_router);
 
     eprintln!(
-        "[video-reader-mcp] Streamable HTTP MCP listening on http://{addr}/mcp"
+        "[cue] Streamable HTTP MCP listening on http://{addr}/mcp"
     );
-    eprintln!("[video-reader-mcp] Health check: http://{addr}/mcp/health");
+    eprintln!("[cue] Health check: http://{addr}/mcp/health");
     if let Some(api_key) = shared_config.api_key.as_deref() {
         let _ = api_key;
-        eprintln!("[video-reader-mcp] API key authentication enabled (X-API-Key header)");
+        eprintln!("[cue] API key authentication enabled (X-API-Key header)");
     } else if !shared_config.is_loopback_host() {
         eprintln!(
-            "[video-reader-mcp] WARNING: bound to non-loopback host {} with no API key. \
+            "[cue] WARNING: bound to non-loopback host {} with no API key. \
              Set MCP_API_KEY or bind MCP_HTTP_HOST=127.0.0.1.",
             shared_config.host
         );
     }
     if let Some(origin) = shared_config.cors_origin.as_deref() {
-        eprintln!("[video-reader-mcp] CORS allowed origin: {origin}");
+        eprintln!("[cue] CORS allowed origin: {origin}");
     }
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

@@ -78,10 +78,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-gnu
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
       - name: Build release native
         run: |
           set -euo pipefail
-          cargo build --release -p video-reader-mcp-server --target x86_64-unknown-linux-gnu
+          # Portable glibc 2.17 for zero-config npx on common hosts
+          cargo install cargo-zigbuild --version 0.23.0 --locked
+          cargo zigbuild --release -p video-reader-mcp-server --target x86_64-unknown-linux-gnu.2.17
           BIN="target/x86_64-unknown-linux-gnu/release/cue-mcp-server"
           test -f "$BIN"
           chmod +x "$BIN"
