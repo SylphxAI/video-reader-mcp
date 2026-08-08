@@ -1,0 +1,38 @@
+name: Deprecate transitional npm id
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type DEPRECATE_VIDEO_READER_MCP
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deprecate:
+    if: ${{ inputs.confirm == 'DEPRECATE_VIDEO_READER_MCP' }}
+    runs-on: sylphx-linux-standard
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+      - name: npm deprecate transitional package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          TOKEN="${NODE_AUTH_TOKEN:-$NPM_TOKEN}"
+          test -n "$TOKEN"
+          printf '//registry.npmjs.org/:_authToken=%s\nalways-auth=true\n' "$TOKEN" > "$HOME/.npmrc"
+          export NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          npm whoami
+          MSG='Retired install CTA. Use brand-sole @sylphx/cue (bin: cue).'
+          npm deprecate "@sylphx/video-reader-mcp" "$MSG"
+          npm view @sylphx/video-reader-mcp version deprecated || true
+          npm view @sylphx/cue version bin
