@@ -1,59 +1,63 @@
-## Zero-config
+<!-- Marketing: promise → CTA → comparison → why → tools → docs -->
+<div align="center">
+
+# Cue
+
+### Timeline proof for agents — not frame-by-frame vision guesses.
+
+**Local-first video evidence**: streams, chapters, subtitles, scenes, and follow-up crops your agent can cite.
+
+**Canonical** [`@sylphx/cue`](https://www.npmjs.com/package/@sylphx/cue) · **bin** `cue` · **live** `0.2.1`
+
+[![npm version](https://img.shields.io/npm/v/@sylphx/cue?style=flat-square)](https://www.npmjs.com/package/@sylphx/cue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
+[![stars](https://img.shields.io/github/stars/SylphxAI/video-reader-mcp?style=flat-square)](https://github.com/SylphxAI/video-reader-mcp/stargazers)
+
+</div>
+
+## Zero-config in one line
 
 ```bash
 npx -y @sylphx/cue
 ```
 
-<div align="center">
+No API key. No global install. Starts a **stdio MCP server** immediately.
 
-# Cue
+| Client | Setup |
+| --- | --- |
+| **Any agent / CLI** | `npx -y @sylphx/cue` |
+| **Claude Code** | `claude mcp add cue -- npx -y @sylphx/cue` |
+| **Desktop / Cursor / VS Code / Codex** | `"command": "npx", "args": ["-y", "@sylphx/cue"]` |
 
-### Timeline proof for agents
+## Why Cue feels unfairly good
 
-Canonical package: **`@sylphx/cue`** · bin **`cue`** · public tools: `read_video`, `video_evidence` only. 
+Your agent watched the video. **Did it read the timeline?**
 
-**Cue** (canonical package `@sylphx/cue`) — local video timeline evidence, not frame-by-frame VLM.
+| Frame-by-frame VLM | **Cue** |
+| --- | --- |
+| Expensive / slow captions | **Timeline structure** (streams, chapters, scenes) |
+| Every follow-up is a new model call | `video_evidence` crops / frames with provenance |
+| Cloud by default | **Local-first** |
+| Setup: GPU + keys | **`npx -y` — done** |
+| Brand mix | `@sylphx/cue` · bin `cue` · brand-sole `serverInfo.name=cue` |
 
-<p align="center">
-  <img src="https://mark.sylphx.com/api/v1/banner?type=mesh&theme=tokyonight&text=cue&desc=Evidence-first+video+reading+for+AI+agents+%E2%80%94+ffprobe%2C+subtitles%2C+scenes%2C+transcr&height=200&animation=rise&credit=0" alt="Cue — Sylphx Mark banner" width="100%" />
-</p>
+### Five reasons teams pick Cue
 
-### Your agent watched the video. **Did it read the timeline?**
+1. **Zero-config MCP** for video evidence.
+2. **Timeline twin**, not random frame captions.
+3. **Local-first** — no required upload of whole videos to a cloud API.
+4. **Fail closed** without the matching native.
+5. **Family ready** — Iris for stills, Citra for PDFs, Locus for code.
 
-Evidence-first video reading for AI agents. One call turns any local video into a
-**timeline document** — ffprobe streams, chapters, embedded subtitles, scene
-boundaries, and warnings you can cite without frame-by-frame vision LLM calls.
+## What agents get
 
-[![npm version](https://img.shields.io/npm/v/@sylphx/cue?style=flat-square)](https://www.npmjs.com/package/@sylphx/cue)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI/CD](https://img.shields.io/github/actions/workflow/status/SylphxAI/video-reader-mcp/ci.yml?style=flat-square&label=CI/CD)](https://github.com/SylphxAI/video-reader-mcp/actions/workflows/ci.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue.svg?style=flat-square)](https://www.typescriptlang.org/)
+Public tools: **`read_video`**, **`video_evidence`**.
 
-**Local-first** · **One smart `read_video` call** · **Timeline evidence + provenance** · **20 tests**
+### Flagship use cases
 
-SOTA family roadmap: [docs/roadmap/sota-family-roadmap.md](docs/roadmap/sota-family-roadmap.md).
-
-[⭐ Star this repo](https://github.com/SylphxAI/video-reader-mcp) if agents should read video timelines with proof, not sampled frame captions.
-· [Quick start](#quick-start) · [See it work](#see-it-work) · [Why not frame-by-frame vision?](#why-not-frame-by-frame-vision)
-
-This repository is product SSOT. Sibling agent tools live in separate repos.
-Each instrument is an independent repository (marketplace + stars).
-
-</div>
-
----
-
-
-
-## Read video structure (not N-second frame spam)
-
-Cue is **local-first timeline architecture**: streams, dialogue, scene cuts, **structural keyframes**, and **agent_index** for text-only agents.
-
-Spec: [docs/specs/agent-video-read-contract.md](docs/specs/agent-video-read-contract.md)
-
-**Local-first frontier:** ffmpeg/ffprobe + structural keyframes, optional local whisper ASR. No cloud required.
-
-Docs: [Cue→Iris semantic timeline](docs/compose-iris.md) — structural keyframes become timestamped objects via Iris L2.
+1. **Meeting / lecture recordings** — chapters, subtitles, scene boundaries  
+2. **Product demos** — extract citeable frames with geometry context  
+3. **Long-form media triage** — structure first, then crop evidence  
 
 ## Product docs
 
@@ -65,31 +69,7 @@ Docs: [Cue→Iris semantic timeline](docs/compose-iris.md) — structural keyfra
 | [docs/TOOL_SURFACE.md](docs/TOOL_SURFACE.md) | Few clear tools policy |
 | [docs/PRODUCT_INDEPENDENCE.md](docs/PRODUCT_INDEPENDENCE.md) | This repo is SSOT |
 | [docs/IPPB.md](docs/IPPB.md) | Independent public product bar |
-| [docs/PUBLISH.md](docs/PUBLISH.md) | npm/git publish status |
-
-## The problem
-
-Videos are not a pile of frames. They are codecs, chapters, embedded subtitles,
-scene cuts, variable frame rates, and timelines measured in milliseconds.
-
-Most agent stacks sample frames and ask a **vision LLM** what it sees. Subtitles
-get skipped. Scene boundaries vanish. Duration and stream metadata never reach
-context. Citations become "around minute two, I think." Then the agent
-hallucinates — confidently.
-
-**Video Reader MCP is built for the moment your agent needs a citeable timeline,
-not a slideshow summary.**
-
-## Why not frame-by-frame vision?
-
-| Typical vision path | Video Reader MCP |
-| --- | --- |
-| Sample N frames into a vision model | ffprobe format + stream metadata in one call |
-| Paraphrased "what happens" | Embedded subtitle cues with `start_ms`, `end_ms`, and provenance |
-| Scene changes guessed from captions | Optional ffmpeg scene filter with timestamp evidence |
-| Missing audio / VFR silently ignored | Warnings for missing ffmpeg/ffprobe, VFR, missing audio, skipped ASR |
-| Cloud API by default | **Local-first** — ffprobe + ffmpeg on your machine |
-| Ship and pray | **20** tests on parsers, fixture corpus, doctor, release gate, and integration |
+| [docs/PUBLISH.md](docs/PUBLISH.md) | npm / git publish status |
 
 ## See it work
 
@@ -98,7 +78,7 @@ not a slideshow summary.**
 ```bash
 npm install -g @sylphx/cue
 cue doctor
-claude mcp add cue -- npx @sylphx/cue
+claude mcp add cue -- npx -y @sylphx/cue
 ```
 
 **Install once. Call once.**
@@ -192,7 +172,7 @@ Add this to `claude_desktop_config.json`:
   "mcpServers": {
     "cue": {
       "command": "npx",
-      "args": ["@sylphx/cue"]
+      "args": ["-y", "@sylphx/cue"]
     }
   }
 }
@@ -201,13 +181,13 @@ Add this to `claude_desktop_config.json`:
 ### Any MCP Client
 
 ```bash
-npx @sylphx/cue
+npx -y @sylphx/cue
 ```
 
 ### HTTP transport (optional)
 
 ```bash
-MCP_TRANSPORT=http MCP_HTTP_PORT=8080 npx @sylphx/cue
+MCP_TRANSPORT=http MCP_HTTP_PORT=8080 npx -y @sylphx/cue
 ```
 
 ## Security model
