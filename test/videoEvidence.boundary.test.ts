@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { hashSourceViaRustEngine } from '../src/engine/rust-timeline.js';
 import {
   cropFrameViaRustEngine,
   isRustCliAvailable,
@@ -111,7 +112,7 @@ describe('rust video evidence engine boundary', () => {
     expect(response.frame.frame_hash.length).toBeGreaterThan(0);
     expect(response.frame.mime).toBe('image/png');
     expect(response.frame.image_base64.length).toBeGreaterThan(0);
-    expect(response.frame.provenance.source_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(response.frame.provenance.source_hash).toBe(hashSourceViaRustEngine(fixturePath));
   });
 
   it('crops citeable PNG evidence at a timestamp when ffmpeg is available', async () => {
@@ -134,7 +135,7 @@ describe('rust video evidence engine boundary', () => {
     expect(response.frame.route).toBe('rust-frame-crop');
     expect(response.frame.frame_hash.length).toBeGreaterThan(0);
     expect(response.frame.crop).toEqual({ x: 10, y: 10, width: 80, height: 60 });
-    expect(response.frame.provenance.source_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(response.frame.provenance.source_hash).toBe(hashSourceViaRustEngine(fixturePath));
   });
 
   it('exposes render_frame and crop_frame through the video_evidence MCP handler', async () => {
@@ -161,6 +162,9 @@ describe('rust video evidence engine boundary', () => {
     expect(renderPayload.route).toBe('rust-frame-render');
     expect(renderPayload.results[0]?.success).toBe(true);
     expect(renderPayload.results[0]?.frame?.frame_hash?.length).toBeGreaterThan(0);
+    expect(renderPayload.results[0]?.frame?.provenance?.source_hash).toBe(
+      hashSourceViaRustEngine(fixturePath)
+    );
 
     const cropResult = await videoEvidence.handler({
       input: {
@@ -185,6 +189,9 @@ describe('rust video evidence engine boundary', () => {
     expect(cropPayload.operation).toBe('crop_frame');
     expect(cropPayload.route).toBe('rust-frame-crop');
     expect(cropPayload.results[0]?.success).toBe(true);
+    expect(cropPayload.results[0]?.frame?.provenance?.source_hash).toBe(
+      hashSourceViaRustEngine(fixturePath)
+    );
   });
 
   it('ocr_frame returns structured honesty (tesseract available or skipped)', async () => {
