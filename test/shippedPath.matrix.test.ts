@@ -31,6 +31,7 @@ type CliEnvelope = {
   results?: Array<{
     success?: boolean;
     timeline?: { provenance?: { assembly_route?: string; source_hash?: string } };
+    frame?: { provenance?: { source_hash?: string } };
   }>;
   envelope?: {
     delegation?: { delegated_tool?: string; reader_package?: string };
@@ -143,6 +144,15 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
   });
 
   it('video_evidence ocr_frame is supported on the default Rust route with OCR honesty', () => {
+    const timelineEnvelope = invokeCli(
+      'read_video',
+      {
+        sources: [{ path: sampleMp4 }],
+        include_subtitles: false,
+        include_scenes: false,
+      },
+      fakeNodeEnv
+    );
     const probe = spawnSync(rustCliBin, [], {
       cwd: repoRoot,
       encoding: 'utf8',
@@ -167,12 +177,19 @@ describe('shipped path matrix (Rust core, no legacy flags)', () => {
       const first = envelope.results?.[0] as {
         success?: boolean;
         ocr?: { available?: boolean; route?: string };
+        frame?: { provenance?: { source_hash?: string } };
         error?: string;
       };
       // OCR may be unavailable without tesseract; still require an honest structured result.
       if (first?.success) {
         expect(first.ocr).toBeDefined();
         expect(typeof first.ocr?.available).toBe('boolean');
+        expect(first.frame?.provenance?.source_hash).toMatch(/^[a-f0-9]{64}$/);
+        if (timelineEnvelope.status === 'ok') {
+          expect(first.frame?.provenance?.source_hash).toBe(
+            timelineEnvelope.results?.[0]?.timeline?.provenance?.source_hash
+          );
+        }
       } else {
         expect(first?.error || first?.ocr).toBeTruthy();
       }

@@ -86,7 +86,7 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
   );
 
   const serverJson = fileExists('server.json')
-    ? (readJson('server.json') as { title?: string })
+    ? (readJson('server.json') as { title?: string; version?: string; packages?: Array<{ version?: string }> })
     : null;
   addCheck(
     checks,
@@ -94,6 +94,18 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     serverJson?.title === 'Cue',
     'server.json marketplace title is Cue',
     { title: serverJson?.title }
+  );
+
+  addCheck(
+    checks,
+    'marketplace:server_json_version',
+    serverJson?.version === pkg.version && serverJson.packages?.[0]?.version === pkg.version,
+    'server.json manifest versions match the package version before registry publication',
+    {
+      packageVersion: pkg.version,
+      manifestVersion: serverJson?.version,
+      manifestPackageVersion: serverJson?.packages?.[0]?.version,
+    }
   );
 
   addCheck(
@@ -274,12 +286,14 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     ffmpegAvailable &&
       renderFrameResponse.ok &&
       renderFrameResponse.frame.route === 'rust-frame-render' &&
-      renderFrameResponse.frame.frame_hash.length > 0,
-    'render_frame returns citeable PNG evidence from the Rust CLI when ffmpeg is available',
+      renderFrameResponse.frame.frame_hash.length > 0 &&
+      /^[a-f0-9]{64}$/.test(renderFrameResponse.frame.provenance.source_hash),
+    'render_frame returns citeable PNG evidence with source-hash provenance from the Rust CLI when ffmpeg is available',
     renderFrameResponse.ok
       ? {
           route: renderFrameResponse.frame.route,
           frameHash: renderFrameResponse.frame.frame_hash,
+          sourceHash: renderFrameResponse.frame.provenance.source_hash,
         }
       : {
           code: renderFrameResponse.ok ? undefined : renderFrameResponse.code,
@@ -299,12 +313,14 @@ export async function buildReleaseGateReport(artifactDir: string): Promise<Relea
     ffmpegAvailable &&
       cropFrameResponse.ok &&
       cropFrameResponse.frame.route === 'rust-frame-crop' &&
-      cropFrameResponse.frame.frame_hash.length > 0,
-    'crop_frame returns citeable cropped PNG evidence from the Rust CLI when ffmpeg is available',
+      cropFrameResponse.frame.frame_hash.length > 0 &&
+      /^[a-f0-9]{64}$/.test(cropFrameResponse.frame.provenance.source_hash),
+    'crop_frame returns citeable cropped PNG evidence with source-hash provenance from the Rust CLI when ffmpeg is available',
     cropFrameResponse.ok
       ? {
           route: cropFrameResponse.frame.route,
           frameHash: cropFrameResponse.frame.frame_hash,
+          sourceHash: cropFrameResponse.frame.provenance.source_hash,
         }
       : {
           code: cropFrameResponse.ok ? undefined : cropFrameResponse.code,

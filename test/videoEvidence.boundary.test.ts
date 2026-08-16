@@ -30,7 +30,13 @@ const parseEvidenceResults = (result: Awaited<ReturnType<typeof videoEvidence.ha
       results: Array<{
         success: boolean;
         route?: string;
-        frame?: { frame_hash: string; mime: string; image_base64: string; crop?: unknown };
+        frame?: {
+          frame_hash: string;
+          mime: string;
+          image_base64: string;
+          crop?: unknown;
+          provenance?: { source_hash?: string };
+        };
         error?: string;
         code?: string;
       }>;
@@ -105,6 +111,7 @@ describe('rust video evidence engine boundary', () => {
     expect(response.frame.frame_hash.length).toBeGreaterThan(0);
     expect(response.frame.mime).toBe('image/png');
     expect(response.frame.image_base64.length).toBeGreaterThan(0);
+    expect(response.frame.provenance.source_hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('crops citeable PNG evidence at a timestamp when ffmpeg is available', async () => {
@@ -127,6 +134,7 @@ describe('rust video evidence engine boundary', () => {
     expect(response.frame.route).toBe('rust-frame-crop');
     expect(response.frame.frame_hash.length).toBeGreaterThan(0);
     expect(response.frame.crop).toEqual({ x: 10, y: 10, width: 80, height: 60 });
+    expect(response.frame.provenance.source_hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('exposes render_frame and crop_frame through the video_evidence MCP handler', async () => {

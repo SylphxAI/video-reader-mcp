@@ -7,6 +7,8 @@ use std::process::{Command, Stdio};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::hash::hash_source_file;
+
 pub const KEYFRAME_ROUTE: &str = "rust-keyframe-png";
 pub const RENDER_FRAME_ROUTE: &str = "rust-frame-render";
 pub const CROP_FRAME_ROUTE: &str = "rust-frame-crop";
@@ -23,6 +25,7 @@ pub struct CropRegion {
 pub struct FrameRenderProvenance {
     pub method: String,
     pub time_ms: u64,
+    pub source_hash: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,6 +93,10 @@ pub fn render_frame(
             message,
         }
     })?;
+    let source_hash = hash_source_file(path).map_err(|message| FrameError {
+        code: FrameErrorCode::ExtractionFailed,
+        message: format!("Unable to hash source for frame evidence: {message}"),
+    })?;
 
     Ok(FrameRenderEvidence {
         time_ms,
@@ -102,6 +109,7 @@ pub fn render_frame(
         provenance: FrameRenderProvenance {
             method: "ffmpeg_seek_render".into(),
             time_ms,
+            source_hash,
         },
         crop: None,
     })
@@ -129,6 +137,10 @@ pub fn crop_frame(
             message,
         }
     })?;
+    let source_hash = hash_source_file(path).map_err(|message| FrameError {
+        code: FrameErrorCode::ExtractionFailed,
+        message: format!("Unable to hash source for frame evidence: {message}"),
+    })?;
 
     Ok(FrameRenderEvidence {
         time_ms,
@@ -141,6 +153,7 @@ pub fn crop_frame(
         provenance: FrameRenderProvenance {
             method: "ffmpeg_seek_crop_render".into(),
             time_ms,
+            source_hash,
         },
         crop: Some(crop.clone()),
     })

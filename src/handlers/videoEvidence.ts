@@ -20,7 +20,7 @@ type EvidenceResult = {
     width: number;
     height: number;
     image_base64?: string;
-    provenance: { method: string; time_ms: number };
+    provenance: { method: string; time_ms: number; source_hash: string };
     crop?: VideoEvidenceArgs['sources'][number]['crop'];
   };
   ocr?: {

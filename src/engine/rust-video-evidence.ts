@@ -21,6 +21,7 @@ export type FrameRenderEvidence = {
   provenance: {
     method: string;
     time_ms: number;
+    source_hash: string;
   };
   crop?: CropRegion | undefined;
 };

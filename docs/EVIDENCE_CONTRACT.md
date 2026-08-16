@@ -15,3 +15,7 @@ Every tool result includes:
 - domain payload (often also as top-level twin/results/answer for compatibility)
 
 Schema: `SylphxAI/skills` `schemas/instrument-evidence-envelope.schema.json`.
+
+`video_evidence` render, crop, and OCR frame results carry the immutable source
+SHA-256 at `frame.provenance.source_hash`, matching `read_video`'s timeline
+provenance hash for the same source.
