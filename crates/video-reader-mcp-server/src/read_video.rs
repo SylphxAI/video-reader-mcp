@@ -12,6 +12,13 @@ pub fn read_video(args: Value) -> Result<CallToolResult, rmcp::ErrorData> {
         }
     })?;
 
+    let warnings: Vec<String> = response
+        .results
+        .iter()
+        .filter_map(|result| result.timeline.as_ref())
+        .flat_map(|timeline| timeline.warnings.iter().cloned())
+        .collect();
+
     let structured = with_family_envelope(
         "read_video",
         READ_VIDEO_ROUTE,
@@ -22,7 +29,7 @@ pub fn read_video(args: Value) -> Result<CallToolResult, rmcp::ErrorData> {
             "results": response.results,
             "envelope": response.envelope,
             "status": "ok",
-            "warnings": [],
+            "warnings": warnings,
             "gaps": [],
         }),
     );

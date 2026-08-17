@@ -148,6 +148,17 @@ pub fn video_evidence_from_value(input: &Value) -> Result<VideoEvidenceResponse,
         }
     }
 
+    if results.iter().all(|result| !result.success) {
+        let messages: Vec<_> = results
+            .iter()
+            .filter_map(|result| result.error.as_deref())
+            .collect();
+        return Err(VideoEvidenceError::invalid_request(format!(
+            "All video evidence sources failed: {}",
+            messages.join("; ")
+        )));
+    }
+
     Ok(VideoEvidenceResponse {
         engine: crate::ENGINE_NAME,
         results,
@@ -400,13 +411,13 @@ mod tests {
 
     #[test]
     fn ocr_frame_is_supported_and_honest_without_video() {
-        let result = video_evidence_from_value(&serde_json::json!({
+        let error = video_evidence_from_value(&serde_json::json!({
             "operation": "ocr_frame",
             "sources": [{ "path": "/tmp/definitely-missing-cue.mp4", "time_ms": 0 }]
         }))
-        .expect("ocr_frame should not hard-reject as unsupported");
-        assert_eq!(result.results.len(), 1);
-        assert!(!result.results[0].success);
+        .expect_err("all failed evidence sources should return a structured request error");
+        assert_eq!(error.code, VideoEvidenceErrorCode::InvalidRequest);
+        assert!(error.message.contains("All video evidence sources failed"));
     }
 
     #[test]

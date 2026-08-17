@@ -1,11 +1,14 @@
 //! Rust timeline assembly, hashing, and cache policy for video-reader-mcp.
 
+pub mod agent_index;
 pub mod asr;
 pub mod envelope;
 pub mod ffprobe;
 pub mod frames;
 pub mod hash;
 pub mod read_video;
+pub mod scenes;
+pub mod subtitles;
 pub mod timeline;
 pub mod video_evidence;
 

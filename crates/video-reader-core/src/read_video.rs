@@ -3,9 +3,13 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::agent_index::{build_agent_video_index, AgentVideoIndex};
 use crate::envelope::build_read_video_envelope;
 use crate::ffprobe::{is_ffprobe_available, run_ffprobe};
+use crate::frames::{extract_keyframes, KeyframeEvidence};
 use crate::hash::{build_cache_key, hash_source_file, CacheOptions};
+use crate::scenes::{detect_scenes, SceneInfo};
+use crate::subtitles::{extract_subtitles, SubtitleCue};
 use crate::timeline::{assemble_probe_timeline, AssembleOptions, TIMELINE_ROUTE};
 use crate::AgentEvidenceEnvelope;
 
@@ -57,10 +61,11 @@ pub struct TimelineDocument {
     pub format: crate::timeline::FormatInfo,
     pub streams: Vec<crate::timeline::StreamInfo>,
     pub chapters: Vec<crate::timeline::ChapterInfo>,
-    pub scenes: Vec<Value>,
-    pub subtitles: Vec<Value>,
+    pub scenes: Vec<SceneInfo>,
+    pub subtitles: Vec<SubtitleCue>,
     pub transcript: Vec<Value>,
-    pub keyframes: Vec<Value>,
+    pub keyframes: Vec<KeyframeEvidence>,
+    pub agent_index: AgentVideoIndex,
     pub warnings: Vec<String>,
 }
 
@@ -124,7 +129,7 @@ pub fn read_video_source(path: &Path, options: &ReadVideoOptions) -> Result<Time
 
     if !is_ffprobe_available() {
         return Err(ReadVideoError::invalid_request(
-            "ffprobe is unavailable on the default Rust read_video route. Install ffmpeg/ffprobe or use VIDEO_READER_MCP_TRANSPORT=ts.",
+            "ffprobe is unavailable on the Rust read_video route. Install ffmpeg/ffprobe and retry.",
         ));
     }
 
@@ -155,26 +160,51 @@ pub fn read_video_source(path: &Path, options: &ReadVideoOptions) -> Result<Time
     );
 
     let mut warnings = assembled.warnings.clone();
+    let mut subtitles = Vec::new();
+    let mut scenes = Vec::new();
+    let mut keyframes = Vec::new();
+
     if options.include_subtitles {
-        warnings.push(
-            "Embedded subtitle extraction is not available on the default Rust read_video route; use VIDEO_READER_MCP_TRANSPORT=ts.".into(),
-        );
+        let extracted = extract_subtitles(path, &ffprobe);
+        subtitles = extracted.subtitles;
+        warnings.extend(extracted.warnings);
     }
     if options.include_scenes {
-        warnings.push(
-            "Scene detection is not available on the default Rust read_video route; use VIDEO_READER_MCP_TRANSPORT=ts.".into(),
-        );
+        match detect_scenes(path, options.scene_threshold) {
+            Ok(detected) => scenes = detected,
+            Err(message) => warnings.push(message),
+        }
     }
     if options.include_transcript {
         warnings.push(
-            "ASR transcript extraction is not available on the default Rust read_video route; use VIDEO_READER_MCP_TRANSPORT=ts.".into(),
+            "ASR transcript extraction is unavailable on the Rust read_video route; no transcript segments were produced.".into(),
         );
     }
     if options.include_keyframes {
-        warnings.push(
-            "Keyframe extraction is not available on the default Rust read_video route; use VIDEO_READER_MCP_TRANSPORT=ts or video_evidence.".into(),
-        );
+        match extract_keyframes(
+            path,
+            options.keyframe_limit,
+            options.include_keyframe_images,
+            options.keyframe_max_dimension,
+        ) {
+            Ok(indexed) => keyframes = indexed,
+            Err(message) => {
+                warnings.push(format!("Keyframe extraction skipped: {}", message.message))
+            }
+        }
     }
+
+    let agent_index = build_agent_video_index(
+        &path.display().to_string(),
+        &assembled.format,
+        &assembled.streams,
+        &assembled.chapters,
+        &scenes,
+        &subtitles,
+        &keyframes,
+        0,
+        &warnings,
+    );
 
     Ok(TimelineDocument {
         provenance: TimelineProvenance {
@@ -189,10 +219,11 @@ pub fn read_video_source(path: &Path, options: &ReadVideoOptions) -> Result<Time
         format: assembled.format,
         streams: assembled.streams,
         chapters: assembled.chapters,
-        scenes: Vec::new(),
-        subtitles: Vec::new(),
+        scenes,
+        subtitles,
         transcript: Vec::new(),
-        keyframes: Vec::new(),
+        keyframes,
+        agent_index,
         warnings,
     })
 }
@@ -253,12 +284,36 @@ pub fn read_video_from_value(input: &Value) -> Result<ReadVideoResponse, ReadVid
             .unwrap_or(0.4),
     };
 
+    if options.keyframe_limit == 0 || options.keyframe_limit > 64 {
+        return Err(ReadVideoError::invalid_params(
+            "keyframe_limit must be between 1 and 64.",
+        ));
+    }
+    if options
+        .keyframe_max_dimension
+        .is_some_and(|max_dimension| max_dimension == 0)
+    {
+        return Err(ReadVideoError::invalid_params(
+            "keyframe_max_dimension must be positive when provided.",
+        ));
+    }
+    if !options.scene_threshold.is_finite() || !(0.0..=1.0).contains(&options.scene_threshold) {
+        return Err(ReadVideoError::invalid_params(
+            "scene_threshold must be a finite number between 0 and 1.",
+        ));
+    }
+
     let mut results = Vec::with_capacity(sources.len());
     for source in sources {
         let path = source
             .get("path")
             .and_then(Value::as_str)
             .ok_or_else(|| ReadVideoError::invalid_params("each source requires a path"))?;
+        if path.trim().is_empty() {
+            return Err(ReadVideoError::invalid_params(
+                "each source requires a non-empty path",
+            ));
+        }
 
         match read_video_source(PathBuf::from(path).as_path(), &options) {
             Ok(timeline) => results.push(VideoSourceResult {
@@ -318,6 +373,7 @@ fn chrono_now_iso() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
     use std::path::PathBuf;
 
     #[test]
@@ -340,5 +396,35 @@ mod tests {
         let timeline = result.timeline.as_ref().expect("timeline");
         assert_eq!(timeline.provenance.assembly_route, TIMELINE_ROUTE);
         assert_eq!(timeline.provenance.source_hash.len(), 64);
+    }
+
+    #[test]
+    fn rejects_invalid_temporal_options_before_touching_sources() {
+        for (field, value) in [
+            ("keyframe_limit", json!(0)),
+            ("keyframe_limit", json!(65)),
+            ("keyframe_max_dimension", json!(0)),
+            ("scene_threshold", json!(-0.1)),
+            ("scene_threshold", json!(1.1)),
+        ] {
+            let mut input = json!({
+                "sources": [{ "path": "/tmp/does-not-need-to-exist.mp4" }]
+            });
+            input[field] = value;
+            let error =
+                read_video_from_value(&input).expect_err("invalid options must fail at admission");
+            assert_eq!(error.code, ReadVideoErrorCode::InvalidParams);
+            assert!(error.message.contains(field), "{}", error.message);
+        }
+    }
+
+    #[test]
+    fn rejects_empty_source_paths_at_admission() {
+        let error = read_video_from_value(&json!({
+            "sources": [{ "path": "  " }]
+        }))
+        .expect_err("empty paths are not admissible");
+        assert_eq!(error.code, ReadVideoErrorCode::InvalidParams);
+        assert!(error.message.contains("non-empty path"));
     }
 }
