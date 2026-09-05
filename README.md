@@ -83,8 +83,7 @@ claude mcp add cue -- npx -y @sylphx/cue
 
 **Install once. Call once.**
 
-```bash
-```
+Use the `read_video` tool with a local path:
 
 ```json
 {
@@ -153,6 +152,7 @@ adapter is wired.
 | Tool | Use it when the agent needs to... |
 | --- | --- |
 | `read_video` | Read one or more local videos and return ffprobe metadata, chapters, subtitles, scenes, and timeline warnings. |
+| `video_evidence` | Follow up at a known `time_ms` with `render_frame`, `crop_frame`, or `ocr_frame` evidence. |
 
 Supported formats: MP4, M4V, MKV, MOV, WebM, and other formats ffprobe can inspect.
 
@@ -161,6 +161,7 @@ Supported formats: MP4, M4V, MKV, MOV, WebM, and other formats ffprobe can inspe
 ### Claude Code
 
 ```bash
+claude mcp add cue -- npx -y @sylphx/cue
 ```
 
 ### Claude Desktop
@@ -251,7 +252,7 @@ it in your MCP client setup, team wiki, or agent stack README.
 | Channel | Status |
 | --- | --- |
 | [Glama MCP directory](https://glama.ai/mcp/servers/SylphxAI/video-reader-mcp) | Listed — [claim server](https://glama.ai/mcp/servers/SylphxAI/video-reader-mcp/admin) for full discoverability |
-| [Official MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.SylphxAI/video-reader-mcp) | Listed — `io.github.SylphxAI/video-reader-mcp` @ v0.1.0 |
+| [Official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.SylphxAI/cue) | Cue listing pending the next tagged release; the separate legacy `video-reader-mcp` listing remains |
 | [TensorBlock MCP Index PR #1113](https://github.com/TensorBlock/awesome-mcp-servers/pull/1113) | Open — multimedia/document processing listing |
 | [MCP servers community issue #4500](https://github.com/modelcontextprotocol/servers/issues/4500) | Open — community server highlight |
 | [mcp.so listing issue #3068](https://github.com/chatmcp/mcpso/issues/3068) | Open — directory submission request |
